@@ -184,7 +184,6 @@
 
   // Рендер нот
   function renderNotes() {
-    div.dataset.id = note.id;
     // Очистка старых нот
     editorArea.querySelectorAll('.note').forEach(n => n.remove());
     const currentTime = audioTrack.currentTime;
