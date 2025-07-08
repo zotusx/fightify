@@ -1,356 +1,497 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fightify</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fightify</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
 
-    :root {
-      --bg1: #5e4d53;
-      --bg2: #a61241;
-      --accent: #00ff99;
-      --text: #ffffff;
-      --dark-panel: #3b3238;
-      --dark-panel-hover: #4a3943;
-    }
+  :root {
+    --bg1: #5e4d53;
+    --bg2: #a61241;
+    --accent: #ff3a5c;
+    --text: #fff;
+    --dark-panel: #3b3238;
+    --dark-panel-hover: #4a3943;
+  }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+  }
 
-    html, body {
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, var(--bg1), var(--bg2));
-      background-size: 400% 400%;
-      animation: gradientShift 10s ease infinite;
-      font-family: 'Orbitron', sans-serif;
-      color: var(--text);
-      overflow: hidden;
-    }
+  html, body {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, var(--bg1), var(--bg2));
+    background-size: 400% 400%;
+    animation: gradientShift 12s ease infinite;
+    font-family: 'Orbitron', sans-serif;
+    color: var(--text);
+    overflow: hidden;
+  }
 
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
 
-    #splash, #menu {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      opacity: 1;
-      transition: opacity 1s ease;
-    }
+  #splash, #menu {
+    position: absolute;
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 1s ease;
+  }
 
-    #splash {
-      z-index: 10;
-      background: transparent;
-    }
+  #splash {
+    z-index: 10;
+  }
 
-    #logo {
-      font-size: 4rem;
-      letter-spacing: 4px;
-      text-shadow: 0 0 20px #a61241;
-      margin-bottom: 20px;
-    }
+  #logo {
+    font-size: 4rem;
+    letter-spacing: 6px;
+    text-shadow:
+      0 0 10px #ff3a5c,
+      0 0 30px #ff3a5c,
+      0 0 50px #ff3a5c;
+    margin-bottom: 20px;
+  }
 
-    #loading-bar {
-      width: 200px;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 3px;
-      overflow: hidden;
-      position: relative;
-    }
+  #loading-bar {
+    width: 220px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
 
-    #loading-fill {
-      width: 0%;
-      height: 100%;
-      background: var(--accent);
-      animation: loadAnim 2s forwards;
-    }
+  #loading-fill {
+    width: 0%;
+    height: 100%;
+    background: var(--accent);
+    animation: loadAnim 2s forwards;
+  }
 
-    @keyframes loadAnim {
-      0% { width: 0%; }
-      100% { width: 100%; }
-    }
+  @keyframes loadAnim {
+    0% { width: 0%; }
+    100% { width: 100%; }
+  }
 
-    #menu {
-      z-index: 5;
-      opacity: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+  #menu {
+    opacity: 0;
+    z-index: 5;
+    width: 100%; height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 
-    #main-menu {
-      display: flex;
-      justify-content: space-between;
-      width: 90%;
-      max-width: 1200px;
-      gap: 40px;
-      height: 80vh;
-    }
+  #main-menu {
+    display: flex;
+    justify-content: space-between;
+    width: 90%;
+    max-width: 1200px;
+    gap: 40px;
+    height: 80vh;
+  }
 
-    .column {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: var(--dark-panel);
-      border-radius: 12px;
-      padding: 24px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.6);
-      overflow-y: auto;
-    }
+  .column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--dark-panel);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.6);
+    overflow-y: auto;
+  }
 
-    .column:hover {
-      background: var(--dark-panel-hover);
-    }
+  .column:hover {
+    background: var(--dark-panel-hover);
+  }
 
-    /* Левая панель - профиль + новости */
-    #left-panel {
-      max-width: 300px;
-    }
+  /* Левая панель - профиль + новости */
+  #left-panel {
+    max-width: 320px;
+  }
 
-    #profile {
-      border-bottom: 1px solid var(--accent);
-      padding-bottom: 16px;
-      margin-bottom: 20px;
-      text-align: center;
-    }
+  #profile {
+    border-bottom: 1px solid var(--accent);
+    padding-bottom: 18px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
 
-    #profile-avatar {
-      width: 96px;
-      height: 96px;
-      border-radius: 50%;
-      background: var(--accent);
-      margin: 0 auto 12px auto;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 3rem;
-      font-weight: 700;
-      color: var(--bg2);
-      user-select: none;
-      box-shadow: 0 0 10px var(--accent);
-    }
+  #profile-avatar {
+    width: 96px; height: 96px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin: 0 auto 12px auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--bg2);
+    user-select: none;
+    box-shadow: 0 0 20px var(--accent);
+  }
 
-    #profile-name {
-      font-size: 1.4rem;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
+  #profile-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-shadow: 0 0 6px var(--accent);
+  }
 
-    #profile-rank {
-      font-size: 1rem;
-      color: var(--accent);
-    }
+  #profile-rank {
+    font-size: 1.1rem;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
 
-    #news {
-      flex: 1;
-    }
+  #profile-stats {
+    font-size: 0.9rem;
+    color: #ccc;
+  }
 
-    #news h2 {
-      font-size: 1.3rem;
-      border-bottom: 2px solid var(--accent);
-      margin-bottom: 12px;
-      padding-bottom: 6px;
-    }
+  #news {
+    flex: 1;
+  }
 
-    .news-item {
-      font-size: 0.9rem;
-      margin-bottom: 12px;
-      border-left: 3px solid var(--accent);
-      padding-left: 8px;
-      color: #ccc;
-    }
+  #news h2 {
+    font-size: 1.3rem;
+    border-bottom: 2px solid var(--accent);
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    text-shadow: 0 0 6px var(--accent);
+  }
 
-    /* Центр - кнопки */
-    .center {
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      align-items: center;
-      justify-content: center;
-    }
+  .news-item {
+    font-size: 1rem;
+    margin-bottom: 14px;
+    border-left: 4px solid var(--accent);
+    padding-left: 10px;
+    color: #bbb;
+  }
 
-    button {
-      background: transparent;
-      border: 2px solid var(--text);
-      color: var(--text);
-      padding: 12px 30px;
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      border-radius: 8px;
-      min-width: 180px;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
+  /* Центр - кнопки */
+  .center {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    align-items: center;
+    justify-content: center;
+  }
 
-    button:hover:not(:disabled) {
-      background: var(--text);
-      color: var(--bg2);
-    }
+  button {
+    background: transparent;
+    border: 2px solid var(--text);
+    color: var(--text);
+    padding: 14px 36px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 8px;
+    min-width: 180px;
+    font-weight: 700;
+    text-transform: uppercase;
+    user-select: none;
+    text-shadow:
+      0 0 4px var(--text);
+  }
 
-    button:disabled {
-      opacity: 0.4;
-      cursor: default;
-    }
+  button:hover:not(:disabled) {
+    background: var(--text);
+    color: var(--bg2);
+    box-shadow:
+      0 0 15px var(--text),
+      0 0 30px var(--accent);
+  }
 
-    /* Правая панель - карта */
-    #right-panel {
-      max-width: 400px;
-    }
+  button:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
 
-    #map-card {
-      background: #4a3943;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 0 15px rgba(255, 0, 65, 0.6);
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      user-select: none;
-    }
+  /* Правая панель - карта */
+  #right-panel {
+    max-width: 440px;
+  }
 
-    #map-title {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: var(--accent);
-      text-align: center;
-      text-shadow: 0 0 6px var(--accent);
-    }
+  #map-card {
+    background: #4a3943;
+    border-radius: 12px;
+    padding: 22px;
+    box-shadow: 0 0 18px rgba(255, 58, 92, 0.7);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    user-select: none;
+  }
 
-    #map-author {
-      font-size: 1rem;
-      color: #ddd;
-      text-align: center;
-    }
+  #map-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-align: center;
+    text-shadow:
+      0 0 10px var(--accent),
+      0 0 25px var(--accent);
+  }
 
-    #map-bpm {
-      font-size: 1rem;
-      color: #bbb;
-      text-align: center;
-      margin-bottom: 12px;
-    }
+  #map-author, #map-bpm {
+    font-size: 1.1rem;
+    color: #ddd;
+    text-align: center;
+    user-select: text;
+  }
 
-    #map-preview {
-      background: #3b2f36;
-      height: 120px;
-      border-radius: 8px;
-      box-shadow: inset 0 0 10px #a61241;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #a61241;
-      font-weight: 700;
-      font-size: 1.1rem;
-    }
+  #map-preview {
+    background: #3b2f36;
+    height: 140px;
+    border-radius: 10px;
+    box-shadow: inset 0 0 18px #a61241;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #a61241;
+    font-weight: 700;
+    font-size: 1.2rem;
+    position: relative;
+  }
 
-    #audio-controls {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin-top: 10px;
-    }
+  #audio-toggle {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: var(--accent);
+    border: none;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    color: var(--bg2);
+    font-size: 1.4rem;
+    cursor: pointer;
+    box-shadow:
+      0 0 10px var(--accent),
+      0 0 20px var(--accent);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.3s;
+    user-select: none;
+  }
 
-    #audio-controls button {
-      padding: 8px 20px;
-      font-size: 1rem;
-      border-color: var(--accent);
-      color: var(--accent);
-    }
+  #audio-toggle:hover {
+    background: #ff5975;
+  }
 
-    #audio-controls button:hover {
-      background: var(--accent);
-      color: var(--bg2);
-    }
+  /* Аудио визуализатор (пульсация) */
+  #audio-visualizer {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 5px;
+    background: var(--accent);
+    animation: pulse 1.5s ease-in-out infinite;
+    border-radius: 3px;
+    filter: drop-shadow(0 0 6px var(--accent));
+  }
 
-  </style>
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scaleX(1); }
+    50% { opacity: 1; transform: scaleX(1.4); }
+  }
+
+  /* Селект карты */
+  #map-list {
+    margin-top: 20px;
+    max-height: 160px;
+    overflow-y: auto;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    background: #3b2f36;
+  }
+
+  .map-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #6d4a56;
+    color: #ddd;
+    user-select: none;
+    transition: background-color 0.25s;
+  }
+
+  .map-item:hover {
+    background: #5d3645;
+  }
+
+  .map-item.selected {
+    background: var(--accent);
+    color: var(--bg2);
+    font-weight: 700;
+  }
+
+  /* Ссылки внизу */
+  #footer {
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.9rem;
+    color: #aaa;
+    user-select: none;
+    letter-spacing: 1.5px;
+  }
+
+  #footer a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    margin-left: 8px;
+    transition: color 0.3s;
+  }
+
+  #footer a:hover {
+    color: #fff;
+    text-decoration: underline;
+  }
+</style>
 </head>
 <body>
-  <div id="splash">
-    <div id="logo">FIGHTIFY</div>
-    <div id="loading-bar">
-      <div id="loading-fill"></div>
+
+<div id="splash">
+  <div id="logo">FIGHTIFY</div>
+  <div id="loading-bar"><div id="loading-fill"></div></div>
+</div>
+
+<div id="menu" style="opacity:0; pointer-events:none;">
+  <div id="main-menu">
+    <div class="column" id="left-panel">
+      <div id="profile">
+        <div id="profile-avatar">Z</div>
+        <div id="profile-name">Zotus</div>
+        <div id="profile-rank">Rank: Rookie</div>
+        <div id="profile-stats">
+          Games Played: 0<br />
+          High Score: 0
+        </div>
+      </div>
+      <div id="news">
+        <h2>News</h2>
+        <div class="news-item">Welcome to Fightify Beta!</div>
+        <div class="news-item">Follow us on <a href="https://t.me/zotus" target="_blank" rel="noopener noreferrer">@zotus</a></div>
+        <div class="news-item">New map coming soon!</div>
+      </div>
+    </div>
+
+    <div class="center">
+      <button id="play-pause-btn" disabled>Play ▶️</button>
+      <button id="settings-btn" disabled style="display:none;">Settings ⚙️</button>
+    </div>
+
+    <div class="column" id="right-panel">
+      <div id="map-card">
+        <div id="map-title">Test Map</div>
+        <div id="map-author">Author: Zotus</div>
+        <div id="map-bpm">BPM: 128</div>
+        <div id="map-preview">
+          Audio Preview
+          <button id="audio-toggle" title="Play/Pause Audio">▶️</button>
+          <div id="audio-visualizer"></div>
+        </div>
+        <div id="map-list">
+          <div class="map-item selected" data-id="test1">Test Map (128 BPM)</div>
+          <!-- Позже сюда добавим остальные карты -->
+        </div>
+      </div>
     </div>
   </div>
-  <div id="menu" style="opacity:0;">
-    <div id="main-menu">
-      <div class="column" id="left-panel">
-        <div id="profile">
-          <div id="profile-avatar">Z</div>
-          <div id="profile-name">Zotus</div>
-          <div id="profile-rank">Rank: Novice</div>
-        </div>
-        <div id="news">
-          <h2>Новости</h2>
-          <div class="news-item">Добро пожаловать в Fightify!</div>
-          <div class="news-item">Скоро будет добавлена авторизация и онлайн-статистика.</div>
-          <div class="news-item">Поддержка новых карт в разработке.</div>
-        </div>
-      </div>
-      <div class="column center" id="center-panel">
-        <button id="playBtn">Играть</button>
-        <button disabled>Настройки (скоро)</button>
-        <button onclick="window.open('https://t.me/zotus', '_blank')">Связаться</button>
-      </div>
-      <div class="column" id="right-panel">
-        <div id="map-card">
-          <div id="map-title">Test Track</div>
-          <div id="map-author">Автор: Zotus</div>
-          <div id="map-bpm">BPM: 120</div>
-          <div id="map-preview">[Превью карты]</div>
-          <div id="audio-controls">
-            <button id="audio-play">▶️ Play</button>
-            <button id="audio-pause" disabled>⏸ Pause</button>
-          </div>
-          <audio id="audio" src="https://cdn.pixabay.com/download/audio/2022/03/24/audio_10ab7996d4.mp3?filename=funky-beat-10944.mp3"></audio>
-        </div>
-      </div>
+</div>
 
-    </div>
-  </div>
+<script>
+  const splash = document.getElementById('splash');
+  const menu = document.getElementById('menu');
+  const playPauseBtn = document.getElementById('play-pause-btn');
+  const audioToggleBtn = document.getElementById('audio-toggle');
+  const mapList = document.getElementById('map-list');
+  const mapTitle = document.getElementById('map-title');
+  const mapAuthor = document.getElementById('map-author');
+  const mapBPM = document.getElementById('map-bpm');
 
-  <script>
-    setTimeout(() => {
-      document.getElementById('splash').style.opacity = 0;
-      document.getElementById('menu').style.opacity = 1;
-    }, 2500);
-    const audio = document.getElementById('audio');
-    const playBtn = document.getElementById('audio-play');
-    const pauseBtn = document.getElementById('audio-pause');
+  // Тестовый аудио объект (пока без звука)
+  let isPlaying = false;
 
-    playBtn.onclick = () => {
-      audio.play();
-      playBtn.disabled = true;
-      pauseBtn.disabled = false;
-    };
+  // Показать меню после загрузки
+  setTimeout(() => {
+    splash.style.opacity = 0;
+    splash.style.pointerEvents = 'none';
+    menu.style.opacity = 1;
+    menu.style.pointerEvents = 'auto';
 
-    pauseBtn.onclick = () => {
-      audio.pause();
-      playBtn.disabled = false;
-      pauseBtn.disabled = true;
-    };
+    playPauseBtn.disabled = false; // сразу активируем кнопку Play
+  }, 2200);
 
-    audio.onended = () => {
-      playBtn.disabled = false;
-      pauseBtn.disabled = true;
-    };
-  </script>
+  // Обработка кнопки Play/Pause
+  playPauseBtn.addEventListener('click', () => {
+    if (isPlaying) {
+      pauseAudio();
+    } else {
+      playAudio();
+    }
+  });
+
+  audioToggleBtn.addEventListener('click', () => {
+    if (isPlaying) {
+      pauseAudio();
+    } else {
+      playAudio();
+    }
+  });
+
+  function playAudio() {
+    isPlaying = true;
+    playPauseBtn.textContent = 'Pause ⏸️';
+    audioToggleBtn.textContent = '⏸️';
+    // TODO: добавить реальное аудио воспроизведение
+  }
+
+  function pauseAudio() {
+    isPlaying = false;
+    playPauseBtn.textContent = 'Play ▶️';
+    audioToggleBtn.textContent = '▶️';
+    // TODO: добавить реальную паузу
+  }
+
+  // Выбор карты
+  mapList.addEventListener('click', e => {
+    if (!e.target.classList.contains('map-item')) return;
+
+    // Снять выделение с других
+    mapList.querySelectorAll('.map-item').forEach(item => {
+      item.classList.remove('selected');
+    });
+
+    e.target.classList.add('selected');
+
+    // Обновить данные карты
+    // Для теста пока только одна карта
+    mapTitle.textContent = 'Test Map';
+    mapAuthor.textContent = 'Author: Zotus';
+    mapBPM.textContent = 'BPM: 128';
+
+    playPauseBtn.disabled = false;
+  });
+</script>
+
+<div id="footer">
+  Made with ❤️ by Zotus
+</div>
 
 </body>
 </html>
