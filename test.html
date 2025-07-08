@@ -178,9 +178,22 @@
     });
     renderNotes();
   });
+  
+  div.onclick = (e) => {
+    e.stopPropagation();
+    const id = parseInt(div.dataset.id);
+    if (mode === 'edit') {
+      notes = notes.filter(n => n.id !== id);
+      renderNotes();
+    } else if (mode === 'test') {
+      fadeOutNote(id);
+    }
+  };
+
 
   // Рендер нот
   function renderNotes() {
+    div.dataset.id = note.id;
     // Очистка старых нот
     editorArea.querySelectorAll('.note').forEach(n => n.remove());
     const currentTime = audioTrack.currentTime;
@@ -252,6 +265,19 @@
       }
     }
   });
+
+
+  function fadeOutNote(id) {
+    const el = document.querySelector(`.note[data-id="${id}"]`);
+    if (!el) return;
+    el.style.opacity = '0.2';
+    el.style.transform = 'scale(0.8)';
+    el.style.transition = 'all 0.2s ease';
+    setTimeout(() => {
+      if (el.parentNode) el.remove();
+    }, 200);
+  }
+
 
   // Обработка ПКМ (правая кнопка мыши) для нот с key='M' в тестовом режиме
   editorArea.addEventListener('contextmenu', (e) => {
