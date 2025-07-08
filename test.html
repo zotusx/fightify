@@ -88,7 +88,7 @@
     }
   });
 
-// Флаг для отслеживания перемотки пользователем
+  // Флаг для отслеживания перемотки пользователем
   seekSlider.dragging = false;
 
   seekSlider.addEventListener('mousedown', () => {
@@ -100,12 +100,11 @@
   });
   seekSlider.addEventListener('input', () => {
     // Чтобы слайдер плавно перематывался при движении мыши
-      if (seekSlider.dragging) {
+    if (seekSlider.dragging) {
       audioTrack.currentTime = seekSlider.value;
       renderNotes();
     }
   });
-
 
   // Переключение режима
   modeBtn.onclick = () => {
@@ -178,9 +177,6 @@
     });
     renderNotes();
   });
-  
-
-
 
   // Рендер нот
   function renderNotes() {
@@ -198,9 +194,6 @@
 
       const div = document.createElement('div');
       div.classList.add('note');
-      if (note.fading) div.classList.add('fading');
-      if (note.highlight) div.classList.add('highlight');
-
       div.textContent = note.key === 'M' ? '🖱' : note.key;
       div.style.left = note.x + 'px';
       div.style.top = note.y + 'px';
@@ -211,16 +204,20 @@
         div.style.cursor = 'pointer';
         div.onclick = (e) => {
           e.stopPropagation();
-          if (mode === 'edit') {
-            // В редакторе клик удаляет ноту
-            notes = notes.filter(n => n.id !== note.id);
-          } else if (mode === 'test') {
-            // В тесте клик по ноте — попытка "попасть" по ноте (fade)
-            fadeOutNote(note.id);
-          }
+          // В редакторе клик удаляет ноту
+          notes = notes.filter(n => n.id !== note.id);
           renderNotes();
         };
-
+      } else if (mode === 'test') {
+        // В тестовом режиме добавляем обработчик наведения
+        div.addEventListener('mouseenter', () => {
+          note.highlight = true;
+          div.classList.add('highlight');
+        });
+        div.addEventListener('mouseleave', () => {
+          note.highlight = false;
+          div.classList.remove('highlight');
+        });
       }
 
       editorArea.appendChild(div);
@@ -253,14 +250,15 @@
       if (note.fading) continue;
       if (note.key !== pressedKey) continue;
       if (Math.abs(note.time - currentTime) <= 0.5) {
-        fadeOutNote(note.id);
-        break;
+        // Проверяем, наведена ли мышь на ноту
+        const noteElement = document.querySelector(`.note[data-id="${note.id}"]`);
+        if (noteElement && noteElement.matches(':hover')) {
+          fadeOutNote(note.id);
+          break;
+        }
       }
     }
   });
-
-
-
 
   // Обработка ПКМ (правая кнопка мыши) для нот с key='M' в тестовом режиме
   editorArea.addEventListener('contextmenu', (e) => {
@@ -272,8 +270,12 @@
       if (note.fading) continue;
       if (note.key !== 'M') continue;
       if (Math.abs(note.time - currentTime) <= 0.5) {
-        fadeOutNote(note.id);
-        break;
+        // Проверяем, наведена ли мышь на ноту
+        const noteElement = document.querySelector(`.note[data-id="${note.id}"]`);
+        if (noteElement && noteElement.matches(':hover')) {
+          fadeOutNote(note.id);
+          break;
+        }
       }
     }
   });
@@ -290,7 +292,6 @@
       renderNotes();
     }, 500);
   }
-
 </script>
 
 </body>
