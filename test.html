@@ -179,16 +179,7 @@
     renderNotes();
   });
   
-  div.onclick = (e) => {
-    e.stopPropagation();
-    const id = parseInt(div.dataset.id);
-    if (mode === 'edit') {
-      notes = notes.filter(n => n.id !== id);
-      renderNotes();
-    } else if (mode === 'test') {
-      fadeOutNote(id);
-    }
-  };
+
 
 
   // Рендер нот
