@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fightify</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+
+    :root {
+      --bg1: #5e4d53;
+      --bg2: #a61241;
+      --accent: #00ff99;
+      --text: #ffffff;
+      --dark-panel: #3b3238;
+      --dark-panel-hover: #4a3943;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      background-size: 400% 400%;
+      animation: gradientShift 10s ease infinite;
+      font-family: 'Orbitron', sans-serif;
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    #splash, #menu {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity 1s ease;
+    }
+
+    #splash {
+      z-index: 10;
+      background: transparent;
+    }
+
+    #logo {
+      font-size: 4rem;
+      letter-spacing: 4px;
+      text-shadow: 0 0 20px #a61241;
+      margin-bottom: 20px;
+    }
+
+    #loading-bar {
+      width: 200px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #loading-fill {
+      width: 0%;
+      height: 100%;
+      background: var(--accent);
+      animation: loadAnim 2s forwards;
+    }
+
+    @keyframes loadAnim {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+
+    #menu {
+      z-index: 5;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #main-menu {
+      display: flex;
+      justify-content: space-between;
+      width: 90%;
+      max-width: 1200px;
+      gap: 40px;
+      height: 80vh;
+    }
+
+    .column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--dark-panel);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.6);
+      overflow-y: auto;
+    }
+
+    .column:hover {
+      background: var(--dark-panel-hover);
+    }
+
+    /* Левая панель - профиль + новости */
+    #left-panel {
+      max-width: 300px;
+    }
+
+    #profile {
+      border-bottom: 1px solid var(--accent);
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    #profile-avatar {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin: 0 auto 12px auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--bg2);
+      user-select: none;
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    #profile-name {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    #profile-rank {
+      font-size: 1rem;
+      color: var(--accent);
+    }
+
+    #news {
+      flex: 1;
+    }
+
+    #news h2 {
+      font-size: 1.3rem;
+      border-bottom: 2px solid var(--accent);
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+    }
+
+    .news-item {
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+      border-left: 3px solid var(--accent);
+      padding-left: 8px;
+      color: #ccc;
+    }
+
+    /* Центр - кнопки */
+    .center {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button {
+      background: transparent;
+      border: 2px solid var(--text);
+      color: var(--text);
+      padding: 12px 30px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-radius: 8px;
+      min-width: 180px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    button:hover:not(:disabled) {
+      background: var(--text);
+      color: var(--bg2);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    /* Правая панель - карта */
+    #right-panel {
+      max-width: 400px;
+    }
+
+    #map-card {
+      background: #4a3943;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 0 15px rgba(255, 0, 65, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      user-select: none;
+    }
+
+    #map-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-align: center;
+      text-shadow: 0 0 6px var(--accent);
+    }
+
+    #map-author {
+      font-size: 1rem;
+      color: #ddd;
+      text-align: center;
+    }
+
+    #map-bpm {
+      font-size: 1rem;
+      color: #bbb;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    #map-preview {
+      background: #3b2f36;
+      height: 120px;
+      border-radius: 8px;
+      box-shadow: inset 0 0 10px #a61241;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #a61241;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    #audio-controls {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    #audio-controls button {
+      padding: 8px 20px;
+      font-size: 1rem;
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    #audio-controls button:hover {
+      background: var(--accent);
+      color: var(--bg2);
+    }
+
+  </style>
+</head>
+<body>
+  <div id="splash">
+    <div id="logo">FIGHTIFY</div>
+    <div id="loading-bar">
+      <div id="loading-fill"></div>
+    </div>
+  </div>
+  <div id="menu" style="opacity:0;">
+    <div id="main-menu">
+      <div class="column" id="left-panel">
+        <div id="profile">
+          <div id="profile-avatar">Z</div>
+          <div id="profile-name">Zotus</div>
+          <div id="profile-rank">Rank: Novice</div>
+        </div>
+        <div id="news">
+          <h2>Новости</h2>
+          <div class="news-item">Добро пожаловать в Fightify!</div>
+          <div class="news-item">Скоро будет добавлена авторизация и онлайн-статистика.</div>
+          <div class="news-item">Поддержка новых карт в разработке.</div>
+        </div>
+      </div>
+      <div class="column center" id="center-panel">
+        <button id="playBtn">Играть</button>
+        <button disabled>Настройки (скоро)</button>
+        <button onclick="window.open('https://t.me/zotus', '_blank')">Связаться</button>
+      </div>
+      <div class="column" id="right-panel">
+        <div id="map-card">
+          <div id="map-title">Test Track</div>
+          <div id="map-author">Автор: Zotus</div>
+          <div id="map-bpm">BPM: 120</div>
+          <div id="map-preview">[Превью карты]</div>
+          <div id="audio-controls">
+            <button id="audio-play">▶️ Play</button>
+            <button id="audio-pause" disabled>⏸ Pause</button>
+          </div>
+          <audio id="audio" src="https://cdn.pixabay.com/download/audio/2022/03/24/audio_10ab7996d4.mp3?filename=funky-beat-10944.mp3"></audio>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    setTimeout(() => {
+      document.getElementById('splash').style.opacity = 0;
+      document.getElementById('menu').style.opacity = 1;
+    }, 2500);
+    const audio = document.getElementById('audio');
+    const playBtn = document.getElementById('audio-play');
+    const pauseBtn = document.getElementById('audio-pause');
+
+    playBtn.onclick = () => {
+      audio.play();
+      playBtn.disabled = true;
+      pauseBtn.disabled = false;
+    };
+
+    pauseBtn.onclick = () => {
+      audio.pause();
+      playBtn.disabled = false;
+      pauseBtn.disabled = true;
+    };
+
+    audio.onended = () => {
+      playBtn.disabled = false;
+      pauseBtn.disabled = true;
+    };
+  </script>
+
+</body>
+</html>
