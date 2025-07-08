@@ -3,336 +3,546 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Fightify Map Editor - Test & Play</title>
+<title>Fightify - Редактор карт</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Orbitron&display=swap');
+  /* === Основные стили === */
   body, html {
-    margin: 0; padding: 0; height: 100vh; background: #5e4d53; font-family: 'Orbitron', monospace;
-    user-select: none;
-    overflow: hidden;
-  }
-  #app {
-    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-    height: 100vh; padding: 10px;
+    margin: 0; padding: 0; height: 100%;
     background: #5e4d53;
-    box-sizing: border-box;
-  }
-  #editorArea {
-    position: relative;
-    width: 1024px; height: 400px;
-    border: 2px solid #a61241;
-    background: #3e3340;
-    margin-bottom: 8px;
-    overflow: hidden;
-    cursor: crosshair;
-  }
-  .note {
-    position: absolute;
-    width: 40px; height: 40px; /* 2.5x bigger from 16 */
-    border-radius: 8px;
-    background: #a61241;
-    color: white;
-    font-weight: bold;
-    font-size: 18px;
-    text-align: center;
-    line-height: 40px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #a61241;
     user-select: none;
-    transition: background-color 0.3s ease;
-    pointer-events: auto;
+    -webkit-user-select:none;
+    overflow: hidden;
   }
-  .note.highlight {
-    background: #d94949;
-    box-shadow: 0 0 12px #d94949aa;
+  #container {
+    display: flex; flex-direction: column; height: 100vh; padding: 10px;
   }
-  .note.fading {
-    transition: opacity 1.2s ease;
-    opacity: 0 !important;
+  h1 {
+    margin: 0 0 10px 0; font-weight: 700; text-align: center;
   }
-  #controls {
-    width: 1024px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    color: white;
+
+  /* === Верхняя панель управления === */
+  #topbar {
+    display: flex; gap: 12px; align-items: center; justify-content: center;
+    margin-bottom: 8px;
   }
-  #audioControls {
-    flex: 1;
-  }
-  #audioSlider {
-    width: 500px;
-  }
-  button {
+  button, select, input[type="file"] {
     background: #a61241;
-    color: white;
     border: none;
+    color: #f0f0f0;
+    font-weight: 700;
     padding: 8px 14px;
     cursor: pointer;
-    font-weight: 700;
-    font-family: 'Orbitron', monospace;
-    user-select: none;
-    border-radius: 5px;
+    border-radius: 4px;
     transition: background-color 0.3s ease;
-  }
-  button:hover {
-    background: #d94949;
-  }
-  #modeToggle {
-    margin-left: 10px;
-  }
-  #info {
-    margin-top: 6px;
-    color: #ccc;
     font-size: 14px;
-    font-family: monospace;
-    width: 1024px;
+  }
+  button:hover, select:hover, input[type="file"]:hover {
+    background: #8f1037;
+  }
+  select {
+    user-select: auto;
+  }
+
+  /* === Редактор нот === */
+  #editorArea {
+    background: #3d3039;
+    flex-grow: 1;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    cursor: crosshair;
+    box-shadow: inset 0 0 15px #a6124144;
+  }
+
+  /* === Зона нажатия справа === */
+  #hitZone {
+    position: absolute;
+    top: 0; right: 100px;
+    width: 60px; height: 100%;
+    border-left: 2px solid #a61241cc;
+    pointer-events: none;
+  }
+
+  /* === Ноты === */
+  .note {
+    position: absolute;
+    width: 40px; height: 40px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 18px;
+    color: white;
+    user-select: none;
+    text-shadow: 0 0 4px #000000cc;
+    box-shadow: 0 0 10px #a61241bb;
+    transition: opacity 0.5s ease;
+  }
+  .note.A { background: #e94a4a; }
+  .note.S { background: #e9a54a; }
+  .note.D { background: #4ae994; }
+  .note.F { background: #4a81e9; }
+  .note.MOUSE { background: #b44ae9; font-size: 22px; }
+
+  /* === Нижняя панель аудио === */
+  #audiobar {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+  }
+  #audioSlider {
+    width: 60%;
+    cursor: pointer;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: #a61241aa;
+  }
+  #audioSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #a61241;
+    cursor: pointer;
+    border: none;
+    margin-top: -5px;
+  }
+  #audioSlider::-moz-range-thumb {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #a61241;
+    cursor: pointer;
+    border: none;
+  }
+
+  /* Подсказка выбранной клавиши */
+  #selectedKey {
+    font-weight: 900;
+    font-size: 18px;
+    padding: 0 6px;
+    color: white;
+    text-shadow: 0 0 8px #a61241cc;
   }
 </style>
 </head>
 <body>
-<div id="app">
-  <div id="editorArea" title="Клик по области для добавления ноты (в режиме Редактора)."></div>
-  <div id="controls">
-    <div id="audioControls">
-      <button id="playPauseBtn">Play ▶️</button>
-      <input type="range" id="audioSlider" min="0" max="100" value="0" step="0.1" />
-      <span id="timeDisplay">00:00 / 00:00</span>
-    </div>
-    <button id="modeToggle">Перейти в режим Тест</button>
+<div id="container">
+  <h1>Fightify — Редактор карт</h1>
+  <div id="topbar">
+    <input id="fileLoader" type="file" accept="audio/*" />
+    <button id="playPauseBtn" disabled>Play ▶️</button>
+    <button id="modeBtn" disabled>Режим: Редактор</button>
+    <select id="keySelector" title="Выберите клавишу для новой ноты">
+      <option value="A">A</option>
+      <option value="S">S</option>
+      <option value="D">D</option>
+      <option value="F">F</option>
+      <option value="MOUSE">ПКМ</option>
+    </select>
+    <span id="selectedKey">A</span>
   </div>
-  <div id="info">
-    <b>Редактор:</b> Добавляйте ноты кликами по области. Ноты обозначены клавишами: A S D F и ПКМ.<br>
-    <b>Тест:</b> Нажмите клавишу, соответствующую ноте (A,S,D,F, ПКМ) при наведении — нота исчезает с плавной анимацией.<br>
-    Используйте кнопку переключения режима сверху.
+  <div id="editorArea">
+    <div id="hitZone"></div>
+  </div>
+  <div id="audiobar">
+    <input type="range" id="audioSlider" min="0" max="100" value="0" step="0.1" />
+    <span id="timeDisplay">00:00 / 00:00</span>
   </div>
 </div>
 
-<audio id="audioTrack" src="https://cdn.pixabay.com/download/audio/2022/03/30/audio_1d5644ea8b.mp3?filename=happy-ukulele-128.mp3"></audio>
+<audio id="audioTrack" preload="auto"></audio>
 
 <script>
 (() => {
-  const editorArea = document.getElementById('editorArea');
-  const playPauseBtn = document.getElementById('playPauseBtn');
-  const audioSlider = document.getElementById('audioSlider');
-  const audioTrack = document.getElementById('audioTrack');
-  const timeDisplay = document.getElementById('timeDisplay');
-  const modeToggle = document.getElementById('modeToggle');
-
-  let notes = [];
-  let noteIdCounter = 0;
-  let mode = 'edit'; // 'edit' or 'test'
-
-  // Размер и расположение нот
+  // Constants
   const noteWidth = 40;
   const noteHeight = 40;
+  const hitZoneX = 700; // позиция зоны нажатия по X (px) в редакторе
+  const editorWidth = 800; // ширина editorArea (px)
+  const editorHeight = 400; // высота editorArea (px)
+  const noteSpeed = 150; // пикселей в секунду, скорость движения нот слева направо (чем больше, тем быстрее)
 
-  // Клавиши для нот (и ПКМ отдельно)
-  const keyMap = ['A','S','D','F'];
-  // ПКМ note key represented as "M" internally
-  const mouseKeyName = 'M';
+  // DOM Elements
+  const fileLoader = document.getElementById('fileLoader');
+  const audioTrack = document.getElementById('audioTrack');
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const modeBtn = document.getElementById('modeBtn');
+  const keySelector = document.getElementById('keySelector');
+  const selectedKeySpan = document.getElementById('selectedKey');
+  const editorArea = document.getElementById('editorArea');
+  const hitZone = document.getElementById('hitZone');
+  const audioSlider = document.getElementById('audioSlider');
+  const timeDisplay = document.getElementById('timeDisplay');
 
-  function formatTime(seconds) {
-    const m = Math.floor(seconds/60).toString().padStart(2,'0');
-    const s = Math.floor(seconds%60).toString().padStart(2,'0');
-    return `${m}:${s}`;
+  // Размеры и стили editorArea
+  editorArea.style.width = editorWidth + 'px';
+  editorArea.style.height = editorHeight + 'px';
+
+  // Состояния
+  let notes = []; // {id, key, time, y, element, hit}
+  let mode = 'editor'; // editor / test
+  let animationFrameId = null;
+  let lastTimestamp = null;
+  let isPlaying = false;
+
+  // Для подсчёта времени и id нот
+  let nextNoteId = 1;
+
+  // Обновление выбранной клавиши
+  keySelector.addEventListener('change', () => {
+    selectedKeySpan.textContent = keySelector.value === 'MOUSE' ? 'ПКМ' : keySelector.value;
+  });
+
+  // Загрузка аудио
+  fileLoader.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    audioTrack.src = url;
+    audioTrack.load();
+    audioTrack.currentTime = 0;
+    playPauseBtn.disabled = false;
+    modeBtn.disabled = false;
+    resetEditor();
+  });
+
+  // Воспроизведение / пауза
+  playPauseBtn.addEventListener('click', () => {
+    if (!audioTrack.src) return;
+    if (isPlaying) {
+      audioTrack.pause();
+    } else {
+      audioTrack.play();
+    }
+  });
+
+  audioTrack.addEventListener('play', () => {
+    isPlaying = true;
+    playPauseBtn.textContent = 'Pause ⏸️';
+    if (mode === 'test') {
+      startAnimation();
+    }
+  });
+  audioTrack.addEventListener('pause', () => {
+    isPlaying = false;
+    playPauseBtn.textContent = 'Play ▶️';
+    stopAnimation();
+  });
+  audioTrack.addEventListener('ended', () => {
+    isPlaying = false;
+    playPauseBtn.textContent = 'Play ▶️';
+    stopAnimation();
+  });
+
+  // Обновление слайдера и времени
+  audioTrack.addEventListener('timeupdate', () => {
+    if (!audioTrack.duration) return;
+    const val = (audioTrack.currentTime / audioTrack.duration) * 100;
+    audioSlider.value = val;
+    updateTimeDisplay();
+  });
+
+  audioSlider.addEventListener('input', () => {
+    if (!audioTrack.duration) return;
+    const time = (audioSlider.value / 100) * audioTrack.duration;
+    audioTrack.currentTime = time;
+    if (mode === 'test') renderNotes();
+  });
+
+  // Обновление времени отображения
+  function updateTimeDisplay() {
+    const ct = audioTrack.currentTime;
+    const dur = audioTrack.duration || 0;
+    timeDisplay.textContent = formatTime(ct) + ' / ' + formatTime(dur);
+  }
+  function formatTime(t) {
+    if (!t) return '00:00';
+    const m = Math.floor(t / 60);
+    const s = Math.floor(t % 60);
+    return (m < 10 ? '0'+m : m) + ':' + (s < 10 ? '0'+s : s);
   }
 
-  function renderNotes() {
-    editorArea.querySelectorAll('.note').forEach(n => n.remove());
-    notes.forEach(n => {
-      if (n.fading) return; // skip fading fully removed notes
-      const div = document.createElement('div');
-      div.classList.add('note');
-      if(n.highlight) div.classList.add('highlight');
-      if(n.fading) div.classList.add('fading');
-      div.textContent = n.key === mouseKeyName ? '🖱' : n.key;
-      div.style.left = n.x + 'px';
-      div.style.top = n.y + 'px';
-      div.dataset.id = n.id;
-      editorArea.appendChild(div);
-    });
-  }
-
-  // Добавляем ноту в редакторе
-  function addNote(x, y) {
-    // Привязываем к сетке по ширине нот
-    x = Math.min(Math.max(0, x - noteWidth/2), editorArea.clientWidth - noteWidth);
-    y = Math.min(Math.max(0, y - noteHeight/2), editorArea.clientHeight - noteHeight);
-    // Присваиваем клавишу циклично по порядку
-    const keyIndex = notes.length % 5;
-    const key = keyIndex < 4 ? keyMap[keyIndex] : mouseKeyName;
-    notes.push({id: noteIdCounter++, x, y, key, fading:false, highlight:false});
-    renderNotes();
-  }
-
-  // Плавное исчезновение ноты
-  function fadeOutNote(id) {
-    const note = notes.find(n=>n.id===id);
-    if(!note || note.fading) return;
-    note.fading = true;
-    renderNotes();
-    // Удаляем через 1.2 секунды после начала плавного исчезновения
-    setTimeout(() => {
-      notes = notes.filter(n => n.id !== id);
-      renderNotes();
-    }, 1200);
-  }
-
-  // При наведении выделяем ноту в тестовом режиме если клавиша совпадает
-  function updateHighlights(mouseX, mouseY, pressedKeys) {
-    if(mode !== 'test') return;
-    let anyHighlight = false;
-    notes.forEach(n => {
-      if(n.fading) {
-        n.highlight = false;
+  // Переключение режимов
+  modeBtn.addEventListener('click', () => {
+    if (mode === 'editor') {
+      if (!audioTrack.src) {
+        alert('Загрузите аудио трек перед тестом карты.');
         return;
       }
-      if (mouseX >= n.x && mouseX <= n.x + noteWidth &&
-          mouseY >= n.y && mouseY <= n.y + noteHeight) {
-        // Наведение на ноту
-        // Выделяем только если клавиша нажата или курсор там (для визуала)
-        if (pressedKeys.has(n.key)) {
-          n.highlight = true;
-          anyHighlight = true;
-        } else {
-          n.highlight = true;
-          anyHighlight = true;
-        }
-      } else {
-        n.highlight = false;
-      }
-    });
-    renderNotes();
-    return anyHighlight;
-  }
+      mode = 'test';
+      modeBtn.textContent = 'Режим: Тест';
+      editorArea.style.cursor = 'default';
+      clearNotesElements();
+      renderNotes();
+      if (isPlaying) startAnimation();
+    } else {
+      mode = 'editor';
+      modeBtn.textContent = 'Режим: Редактор';
+      editorArea.style.cursor = 'crosshair';
+      stopAnimation();
+      clearNotesElements();
+      renderNotes();
+    }
+  });
 
-  // Обновляем прогресс слайдера и времени
-  function updateAudioProgress() {
-    if (audioTrack.duration) {
-      const current = audioTrack.currentTime;
-      const dur = audioTrack.duration;
-      audioSlider.value = (current/dur)*100;
-      timeDisplay.textContent = `${formatTime(current)} / ${formatTime(dur)}`;
+  // Добавление ноты при клике в редакторе (только в режиме редактора)
+  editorArea.addEventListener('contextmenu', e => e.preventDefault());
+
+  editorArea.addEventListener('mousedown', e => {
+    if (mode !== 'editor') return;
+    // Определяем нажатую клавишу: мышь ПКМ или выбранная на селекте
+    let key = keySelector.value;
+    if (e.button === 2) key = 'MOUSE';
+    else if (e.button !== 0) return; // добавляем ноты только ЛКМ или ПКМ
+
+    const rect = editorArea.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    if (x > editorWidth - 100) return; // запрет добавлять в зоне нажатия справа
+
+    const y = e.clientY - rect.top;
+    const time = audioTrack.currentTime + (hitZoneX - x) / noteSpeed;
+
+    if (time < 0) return; // не добавляем ноты в прошлое
+
+    addNote(key, time, y);
+  });
+
+  // Добавляем ноту в массив и на экран
+  function addNote(key, time, y) {
+    const id = nextNoteId++;
+    const note = {
+      id,
+      key,
+      time,
+      y: Math.min(Math.max(y, noteHeight/2), editorHeight - noteHeight/2),
+      hit: false,
+      element: null,
+      opacity: 1,
+    };
+    notes.push(note);
+    if (mode === 'editor') {
+      createNoteElement(note);
+      sortNotesByTime();
     }
   }
 
-  // Инициализация
-  function init() {
-    renderNotes();
+  // Создаём DOM элемент ноты для редактора
+  function createNoteElement(note) {
+    const el = document.createElement('div');
+    el.classList.add('note', note.key);
+    el.style.top = (note.y - noteHeight/2) + 'px';
+    el.style.left = ((note.time - audioTrack.currentTime) * noteSpeed) + 'px';
+    el.textContent = note.key === 'MOUSE' ? '🖱️' : note.key;
+    editorArea.appendChild(el);
+    note.element = el;
+  }
 
-    editorArea.addEventListener('click', (e) => {
-      if(mode !== 'edit') return;
-      const rect = editorArea.getBoundingClientRect();
-      addNote(e.clientX - rect.left, e.clientY - rect.top);
-    });
-
-    // Управление аудио
-    playPauseBtn.addEventListener('click', () => {
-      if(audioTrack.paused) {
-        audioTrack.play();
-        playPauseBtn.textContent = 'Pause ⏸';
+  // Обновляем позиции нот в редакторе
+  function updateEditorNotes() {
+    const now = audioTrack.currentTime;
+    notes.forEach(note => {
+      if (!note.element) return;
+      const x = (note.time - now) * noteSpeed;
+      if (x < -noteWidth) {
+        note.element.style.display = 'none';
       } else {
-        audioTrack.pause();
-        playPauseBtn.textContent = 'Play ▶️';
+        note.element.style.display = 'flex';
+        note.element.style.left = x + 'px';
       }
     });
+  }
 
-    audioSlider.addEventListener('input', () => {
-      if(audioTrack.duration) {
-        audioTrack.currentTime = (audioSlider.value / 100) * audioTrack.duration;
+  // Сортируем ноты по времени (возрастание)
+  function sortNotesByTime() {
+    notes.sort((a,b) => a.time - b.time);
+  }
+
+  // Удаляем все DOM элементы нот
+  function clearNotesElements() {
+    notes.forEach(note => {
+      if (note.element) {
+        note.element.remove();
+        note.element = null;
       }
     });
+  }
 
-    audioTrack.addEventListener('timeupdate', updateAudioProgress);
-    audioTrack.addEventListener('ended', () => {
-      playPauseBtn.textContent = 'Play ▶️';
-      audioSlider.value = 0;
+  // === Тестовый режим ===
+  // Создаём и отображаем ноты, которые двигаются слева направо к hitZone
+  // При наведении и нажатии правильной клавиши нота плавно исчезает и удаляется
+
+  function renderNotes() {
+    clearNotesElements();
+    notes.forEach(note => {
+      note.opacity = 1;
+      note.hit = false;
+      createNoteElement(note);
     });
+    updateTestNotesPositions();
+  }
 
-    // Режимы редактор / тест
-    modeToggle.addEventListener('click', () => {
-      if(mode === 'edit') {
-        mode = 'test';
-        modeToggle.textContent = 'Перейти в режим Редактирования';
-        editorArea.style.cursor = 'default';
-        // Остановим трек и ресет позицию
-        audioTrack.pause();
-        audioTrack.currentTime = 0;
-        playPauseBtn.textContent = 'Play ▶️';
+  function updateTestNotesPositions() {
+    const now = audioTrack.currentTime;
+    notes.forEach(note => {
+      if (!note.element) return;
+      const timeDiff = note.time - now;
+      const x = timeDiff * noteSpeed;
+      if (x < -noteWidth) {
+        note.element.style.display = 'none';
       } else {
-        mode = 'edit';
-        modeToggle.textContent = 'Перейти в режим Тест';
-        editorArea.style.cursor = 'crosshair';
+        note.element.style.display = 'flex';
+        note.element.style.left = x + 'px';
       }
-      renderNotes();
     });
+  }
 
-    // Тестовый функционал — удаление нот по нажатию клавиш при наведении
-    const pressedKeys = new Set();
+  // Анимация теста
+  function animationStep(ts) {
+    if (!lastTimestamp) lastTimestamp = ts;
+    const dt = (ts - lastTimestamp) / 1000;
+    lastTimestamp = ts;
 
-    // Для мышки: проверяем клик правой кнопкой (contextmenu)
-    editorArea.addEventListener('contextmenu', e => {
-      if(mode !== 'test') return;
-      e.preventDefault();
-      const rect = editorArea.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      // Ищем ноту под мышью с key "M"
-      for(let n of notes) {
-        if(n.fading) continue;
-        if(n.key === mouseKeyName &&
-           x >= n.x && x <= n.x + noteWidth &&
-           y >= n.y && y <= n.y + noteHeight) {
-          fadeOutNote(n.id);
-          break;
+    const now = audioTrack.currentTime;
+
+    notes.forEach(note => {
+      if (!note.element) return;
+      if (note.hit) {
+        note.opacity -= dt * 2; // плавное исчезновение (0.5 сек)
+        if (note.opacity <= 0) {
+          note.element.remove();
+          note.element = null;
+          note.hit = 'removed';
+        } else {
+          note.element.style.opacity = note.opacity;
+        }
+      } else {
+        const timeDiff = note.time - now;
+        const x = timeDiff * noteSpeed;
+        if (x < -noteWidth) {
+          // Удаляем просроченную ноту, если не нажали
+          note.element.remove();
+          note.element = null;
+          note.hit = 'missed';
+        } else {
+          note.element.style.left = x + 'px';
+          note.element.style.opacity = 1;
         }
       }
     });
 
-    // Обновляем подсветку при движении мыши в режиме теста
-    editorArea.addEventListener('mousemove', e => {
-      if(mode !== 'test') return;
-      const rect = editorArea.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      updateHighlights(mouseX, mouseY, pressedKeys);
-    });
+    // Фильтруем удалённые и пропущенные ноты из массива
+    notes = notes.filter(n => n.hit !== 'removed' && n.hit !== 'missed');
 
-    editorArea.addEventListener('mouseleave', () => {
-      if(mode !== 'test') return;
-      notes.forEach(n => n.highlight = false);
-      renderNotes();
-    });
-
-    // Обработчик клавиатуры
-    window.addEventListener('keydown', e => {
-      if(mode !== 'test') return;
-      const key = e.key.toUpperCase();
-      pressedKeys.add(key);
-      // Находим ноту под курсором с этой клавишей и удаляем
-      // Для этого нужно знать позицию мыши, но в window событии мы её не знаем, 
-      // потому сделаем так: удалять все ноты с этим ключом, которые выделены (highlight)
-      let anyDeleted = false;
-      notes.filter(n => n.highlight && n.key === key && !n.fading).forEach(n => {
-        fadeOutNote(n.id);
-        anyDeleted = true;
-      });
-      if(anyDeleted) e.preventDefault();
-    });
-
-    window.addEventListener('keyup', e => {
-      if(mode !== 'test') return;
-      const key = e.key.toUpperCase();
-      pressedKeys.delete(key);
-      // Уберем подсветку, если клавиша отпущена
-      notes.forEach(n => {
-        if(n.key === key) n.highlight = false;
-      });
-      renderNotes();
-    });
+    animationFrameId = requestAnimationFrame(animationStep);
+  }
+  function startAnimation() {
+    if (!animationFrameId) {
+      lastTimestamp = null;
+      animationFrameId = requestAnimationFrame(animationStep);
+    }
+  }
+  function stopAnimation() {
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+      lastTimestamp = null;
+    }
   }
 
-  init();
+  // Обработка нажатий клавиш для теста
+  window.addEventListener('keydown', e => {
+    if (mode !== 'test' || !isPlaying) return;
+    const keyPressed = e.key.toUpperCase();
+    if (!['A','S','D','F'].includes(keyPressed)) return;
+    hitNoteByKey(keyPressed);
+  });
+
+  // Обработка наведения и клика мыши по нотам ПКМ (MOUSE)
+  editorArea.addEventListener('mousemove', e => {
+    if (mode !== 'test' || !isPlaying) return;
+    const rect = editorArea.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    notes.forEach(note => {
+      if (note.key !== 'MOUSE' || note.hit) return;
+      if (!note.element) return;
+      const noteX = parseFloat(note.element.style.left);
+      const noteY = note.y - noteHeight/2;
+      if (mouseX >= noteX && mouseX <= noteX + noteWidth && mouseY >= noteY && mouseY <= noteY + noteHeight) {
+        note.element.style.filter = 'brightness(1.5)';
+      } else {
+        note.element.style.filter = '';
+      }
+    });
+  });
+  editorArea.addEventListener('mousedown', e => {
+    if (mode !== 'test' || !isPlaying) return;
+    if (e.button !== 2) return; // только ПКМ для нот MOUSE
+    e.preventDefault();
+    const rect = editorArea.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    notes.forEach(note => {
+      if (note.key !== 'MOUSE' || note.hit) return;
+      if (!note.element) return;
+      const noteX = parseFloat(note.element.style.left);
+      const noteY = note.y - noteHeight/2;
+      if (mouseX >= noteX && mouseX <= noteX + noteWidth && mouseY >= noteY && mouseY <= noteY + noteHeight) {
+        hitNote(note);
+      }
+    });
+  });
+
+  // Функция для обработки попадания по ноте по клавише
+  function hitNoteByKey(key) {
+    // ищем ближайшую ноту по времени, которая не нажата и совпадает с key, и которая в зоне попадания
+    // зона попадания - ноты с x в районе hitZoneX ± 40px
+    const now = audioTrack.currentTime;
+    const zoneLeft =  hitZoneX - 40;
+    const zoneRight = hitZoneX + 40;
+
+    let candidate = null;
+    let candidateDist = Infinity;
+    notes.forEach(note => {
+      if (note.hit || note.key !== key) return;
+      if (!note.element) return;
+      const x = parseFloat(note.element.style.left);
+      if (x >= zoneLeft && x <= zoneRight) {
+        const dist = Math.abs(x - hitZoneX);
+        if (dist < candidateDist) {
+          candidateDist = dist;
+          candidate = note;
+        }
+      }
+    });
+    if (candidate) hitNote(candidate);
+  }
+
+  // Помечаем ноту как нажатую и запускаем анимацию исчезновения
+  function hitNote(note) {
+    note.hit = true;
+    note.element.style.filter = 'brightness(2)';
+  }
+
+  // Сброс редактора
+  function resetEditor() {
+    notes = [];
+    clearNotesElements();
+    audioSlider.value = 0;
+    timeDisplay.textContent = '00:00 / 00:00';
+    mode = 'editor';
+    modeBtn.textContent = 'Режим: Редактор';
+    editorArea.style.cursor = 'crosshair';
+  }
+
 })();
 </script>
 </body>
 </html>
+
