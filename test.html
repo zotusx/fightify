@@ -198,6 +198,9 @@
 
       const div = document.createElement('div');
       div.classList.add('note');
+      if (note.fading) div.classList.add('fading');
+      if (note.highlight) div.classList.add('highlight');
+
       div.textContent = note.key === 'M' ? '🖱' : note.key;
       div.style.left = note.x + 'px';
       div.style.top = note.y + 'px';
@@ -257,16 +260,6 @@
   });
 
 
-  function fadeOutNote(id) {
-    const el = document.querySelector(`.note[data-id="${id}"]`);
-    if (!el) return;
-    el.style.opacity = '0.2';
-    el.style.transform = 'scale(0.8)';
-    el.style.transition = 'all 0.2s ease';
-    setTimeout(() => {
-      if (el.parentNode) el.remove();
-    }, 200);
-  }
 
 
   // Обработка ПКМ (правая кнопка мыши) для нот с key='M' в тестовом режиме
