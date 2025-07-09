@@ -260,7 +260,7 @@
     </div>
 
     <script>
-        // Состояние редактора
+        // Состояние редактора // Состояние редактора
         const state = {
             audio: null,
             isPlaying: false,
@@ -276,7 +276,7 @@
             hitWindow: 0.3
         };
 
-        // Элементы DOM
+    // Элементы DOM
         const elements = {
             audioUpload: document.getElementById('audio-upload'),
             playBtn: document.getElementById('play-btn'),
@@ -292,7 +292,7 @@
             scoreDisplay: document.getElementById('score-display')
         };
 
-        // Инициализация
+    // Инициализация
         init();
 
         function init() {
@@ -304,7 +304,7 @@
             elements.audioUpload.addEventListener('change', handleAudioUpload);
             elements.playBtn.addEventListener('click', togglePlay);
             elements.timeline.addEventListener('click', handleTimelineClick);
-            
+        
             elements.keyButtons.forEach(btn => {
                 btn.addEventListener('click', () => {
                     state.selectedKey = btn.dataset.key;
@@ -314,9 +314,9 @@
             
             elements.modeToggle.addEventListener('click', toggleMode);
             elements.durationSlider.addEventListener('input', updateDuration);
-            elements.gameArea.addEventListener('click', handleNotePlacement);
+            elements.gameArea.addEventListener('mousedown', handleNoteClick); // Изменено на mousedown
             document.addEventListener('keydown', handleKeyPress);
-            
+        
             setInterval(updateEditorNotes, 100);
         }
 
@@ -489,69 +489,98 @@
                 }
             });
         }
-
+        
         function handleNoteClick(e) {
-            if (e.button === 2) return; // Игнорируем правую кнопку мыши
-            
+           if (state.mode !== 'test') return;
+        
+        // Для RMB нот - только правая кнопка мыши
+            if (e.target.classList.contains('RMB')) {
+                if (e.button !== 2) return; // Только ПКМ
+            } 
+        // Для других нот - только левая кнопка мыши
+            else {
+                if (e.button !== 0) return; // Только ЛКМ
+            }
+
             const noteElement = e.target;
             const noteTime = parseFloat(noteElement.dataset.time);
             const noteKey = noteElement.dataset.key;
-            
-            // Удаляем только если клик соответствует клавише ноты
-            if (noteKey === state.selectedKey) {
-                markNoteAsDeleted(noteTime, noteKey);
-                animateNoteRemoval(noteElement);
-                
-                state.score++;
-                updateScoreDisplay();
-            }
+        
+            markNoteAsDeleted(noteTime, noteKey);
+            animateNoteRemoval(noteElement);
+            state.renderedNotes.delete(`${noteTime}-${noteKey}`);
+        
+            state.score++;
+            updateScoreDisplay();
         }
 
         function handleKeyPress(e) {
-            if (state.mode !== 'test') return;
+        if (state.mode !== 'test') return;
+        
+        const keyMap = {
+            'a': 'A', 
+            's': 'S', 
+            'd': 'D', 
+            'f': 'F'
+        };
+        
+        const key = keyMap[e.key.toLowerCase()];
+        if (!key) return;
+        
+        // Находим все видимые ноты с этой клавишей
+        const visibleNotes = Array.from(state.renderedNotes.values())
+            .filter(el => el.dataset.key === key);
+        
+        if (visibleNotes.length === 0) return;
+        
+        // Находим ближайшую ноту
+        let closestNote = null;
+        let smallestDiff = Infinity;
+        
+        visibleNotes.forEach(noteEl => {
+            const noteTime = parseFloat(noteEl.dataset.time);
+            const timeDiff = Math.abs(noteTime - state.currentTime);
             
-            const keyMap = {
-                'a': 'A', 
-                's': 'S', 
-                'd': 'D', 
-                'f': 'F'
-            };
+            if (timeDiff < smallestDiff && timeDiff <= state.hitWindow) {
+                smallestDiff = timeDiff;
+                closestNote = noteEl;
+            }
+        });
+        
+        if (closestNote) {
+            const noteTime = parseFloat(closestNote.dataset.time);
+            const noteKey = closestNote.dataset.key;
             
-            const key = keyMap[e.key.toLowerCase()];
-            if (!key) return;
+            markNoteAsDeleted(noteTime, noteKey);
+            animateNoteRemoval(closestNote);
+            state.renderedNotes.delete(`${noteTime}-${noteKey}`);
             
-            // Находим все видимые ноты с этой клавишей
-            const visibleNotes = Array.from(state.renderedNotes.values())
-                .filter(el => el.dataset.key === key);
-            
-            if (visibleNotes.length === 0) return;
-            
-            // Находим ноту, время которой ближе всего к текущему
-            let closestNote = null;
-            let smallestDiff = Infinity;
-            
-            visibleNotes.forEach(noteEl => {
-                const noteTime = parseFloat(noteEl.dataset.time);
-                const timeDiff = Math.abs(noteTime - state.currentTime);
-                
-                if (timeDiff < smallestDiff && timeDiff <= state.hitWindow) {
-                    smallestDiff = timeDiff;
-                    closestNote = noteEl;
-                }
-            });
-            
-            if (closestNote) {
-                const noteTime = parseFloat(closestNote.dataset.time);
-                const noteKey = closestNote.dataset.key;
-                
-                markNoteAsDeleted(noteTime, noteKey);
-                animateNoteRemoval(closestNote);
-                state.renderedNotes.delete(`${noteTime}-${noteKey}`);
-                
-                state.score++;
-                updateScoreDisplay();
+            state.score++;
+            updateScoreDisplay();
+        }
+    }
+        function markNoteAsDeleted(time, key) {
+            const noteIndex = state.notes.findIndex(n => 
+                Math.abs(n.time - time) < 0.01 && 
+                n.key === key && 
+                !n.deleted
+            );
+        
+            if (noteIndex !== -1) {
+                state.notes[noteIndex].deleted = true;
             }
         }
+
+        function animateNoteRemoval(element) {
+            element.classList.add('fade-out');
+            setTimeout(() => {
+                element.remove();
+            }, 300);
+        }
+
+        function updateScoreDisplay() {
+            elements.scoreDisplay.textContent = `Score: ${state.score} / ${state.totalNotes}`;
+        }    
 
         function markNoteAsDeleted(time, key) {
             const noteIndex = state.notes.findIndex(n => 
@@ -565,27 +594,9 @@
             }
         }
 
-        function animateNoteRemoval(element) {
-            element.classList.add('fade-out');
-            setTimeout(() => {
-                element.remove();
-            }, 300);
-        }
-
-        function removeNoteElement(note) {
-            if (note.element) {
-                note.element.remove();
-                state.renderedNotes.delete(`${note.time}-${note.key}`);
-            }
-        }
-
         function clearRenderedNotes() {
             state.renderedNotes.forEach(element => element.remove());
             state.renderedNotes.clear();
-        }
-
-        function updateScoreDisplay() {
-            elements.scoreDisplay.textContent = `Score: ${state.score} / ${state.totalNotes}`;
         }
     </script>
 </body>
