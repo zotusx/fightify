@@ -121,7 +121,8 @@
             duration: 0,
             mode: 'editor', // 'editor' | 'test'
             notes: [],
-            selectedKey: 'A'
+            selectedKey: 'A',
+            noteDisplayDuration: 1.0 // Секунды (1.0 = до/после времени ноты)
         };
 
         // Элементы DOM
@@ -255,17 +256,37 @@
             }, 300);
         }
 
-        // Рендер нот в тестовом режиме
+        // // Рендер нот в тестовом режиме
         function renderTestNotes() {
             clearGameArea();
             const currentTime = state.currentTime;
-            const visibleNotes = state.notes.filter(note => 
-                Math.abs(note.time - currentTime) < 0.1
-            );
-
+            const visibleNotes = state.notes.filter(note => {
+                const noteTime = note.time;
+                const startTime = noteTime - state.noteDisplayDuration / 2;
+                const endTime = noteTime + state.noteDisplayDuration / 2;
+                return currentTime >= startTime && currentTime <= endTime;
+            }); 
             visibleNotes.forEach(note => {
-                renderNote(note);
-            });
+            const noteElement = document.createElement('div');
+            noteElement.className = `note ${note.key}`;
+            noteElement.textContent = note.key === 'RMB' ? '⨀' : note.key;
+            noteElement.style.left = `${note.x}%`;
+            noteElement.style.top = `${note.y}%`;
+            
+            // Плавное появление/исчезновение
+            const noteTime = note.time;
+            const timeLeft = noteTime - currentTime; // Осталось до времени ноты
+            if (timeLeft > 0) {
+                noteElement.style.opacity = '0';
+                setTimeout(() => {
+                    noteElement.style.opacity = '1';
+                    noteElement.style.transition = 'opacity 0.2s';
+                }, 100);
+            }
+
+            noteElement.addEventListener('click', handleNoteClick);
+            elements.gameArea.appendChild(noteElement);
+        });
         }
 
         // Очистка игровой области
