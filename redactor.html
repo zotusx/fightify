@@ -317,6 +317,7 @@
         elements.gameArea.addEventListener('mousedown', handleNoteClick);
         elements.gameArea.addEventListener('click', handleNotePlacement);
         document.addEventListener('keydown', handleKeyPress);
+        document.addEventListener('contextmenu', handleRightClick);
         
         setInterval(updateEditorNotes, 100);
     }
@@ -488,14 +489,15 @@
     
     function handleNoteClick(e) {
         if (state.mode !== 'test') return;
-    
+        e.preventDefault();
+        
         // Для RMB нот - только правая кнопка мыши
         if (e.target.classList.contains('RMB')) {
             if (e.button !== 2) return;
         } 
-        // Для других нот - только левая кнопка мыши и если выбрана соответствующая клавиша
+        // Для других нот - только левая кнопка мыши
         else {
-            if (e.button !== 0 || e.target.dataset.key !== state.selectedKey) return;
+            if (e.button !== 0) return;
         }
 
         const noteElement = e.target;
@@ -534,6 +536,43 @@
         let smallestDiff = Infinity;
         
         visibleNotes.forEach(noteEl => {
+            const noteTime = parseFloat(noteEl.dataset.time);
+            const timeDiff = Math.abs(noteTime - state.currentTime);
+            
+            if (timeDiff < smallestDiff && timeDiff <= state.hitWindow) {
+                smallestDiff = timeDiff;
+                closestNote = noteEl;
+            }
+        });
+        
+        if (closestNote) {
+            const noteTime = parseFloat(closestNote.dataset.time);
+            const noteKey = closestNote.dataset.key;
+            
+            markNoteAsDeleted(noteTime, noteKey);
+            animateNoteRemoval(closestNote);
+            state.renderedNotes.delete(`${noteTime}-${noteKey}`);
+            
+            state.score++;
+            updateScoreDisplay();
+        }
+    }
+
+    function handleRightClick(e) {
+        if (state.mode !== 'test') return;
+        e.preventDefault();
+        
+        // Находим все видимые RMB ноты
+        const visibleRmbNotes = Array.from(state.renderedNotes.values())
+            .filter(el => el.dataset.key === 'RMB');
+        
+        if (visibleRmbNotes.length === 0) return;
+        
+        // Находим ближайшую RMB ноту
+        let closestNote = null;
+        let smallestDiff = Infinity;
+        
+        visibleRmbNotes.forEach(noteEl => {
             const noteTime = parseFloat(noteEl.dataset.time);
             const timeDiff = Math.abs(noteTime - state.currentTime);
             
