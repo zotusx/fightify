@@ -1,208 +1,137 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fightify Editor</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
-
         :root {
             --bg1: #5e4d53;
-            --bg2: #a61241;
+            --bg2: #3b2f36;
             --accent: #a61241;
             --text-light: #eee;
-            --panel-bg: #3b2f36;
-            --item-bg: #4a3942;
+            --panel-bg: #4a3942;
         }
 
         body {
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            font-family: 'Orbitron', sans-serif;
-            user-select: none;
-            height: 100vh;
-            overflow: hidden;
-            background: url('resources/bg_menu.png') no-repeat center center fixed;
-            background-size: cover;
+            background: var(--bg1);
             color: var(--text-light);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            overflow: hidden;
         }
-
+        
         #editor-container {
-            width: 960px;
-            max-width: 95vw;
-            height: 520px;
-            background: var(--panel-bg);
-            border-radius: 16px;
-            box-shadow: 0 0 20px var(--accent);
-            display: flex;
-            overflow: hidden;
-        }
-
-        #left-panel {
-            width: 280px;
-            border-right: 2px solid var(--accent);
-            padding: 20px;
-            box-sizing: border-box;
             display: flex;
             flex-direction: column;
-        }
-
-        #editor-title {
-            font-size: 1.8rem;
-            font-weight: 800;
-            margin-bottom: 20px;
-            color: var(--accent);
-            text-align: center;
-        }
-
-        .control-group {
-            background: var(--item-bg);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-
-        .control-group h3 {
-            margin: 0 0 10px 0;
-            font-size: 1.1rem;
-            color: var(--accent);
-        }
-
-        #key-selector {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-        }
-
-        .key-btn {
+            height: 100vh;
             padding: 10px;
-            background: #3b2f36;
-            border: 1px solid var(--accent);
-            border-radius: 8px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 600;
+            box-sizing: border-box;
         }
-
-        .key-btn.active {
-            background: var(--accent);
-            color: var(--panel-bg);
-            transform: scale(1.05);
-            box-shadow: 0 0 8px var(--accent);
-        }
-
-        #duration-control {
+        
+        #toolbar {
             display: flex;
-            align-items: center;
             gap: 10px;
-            margin-top: 10px;
+            padding: 10px;
+            background: var(--bg2);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            align-items: center;
+            flex-wrap: wrap;
         }
-
-        #duration-value {
-            min-width: 40px;
-            text-align: center;
-            font-weight: 600;
-        }
-
-        .btn {
+        
+        button, select {
+            padding: 8px 12px;
             background: var(--accent);
+            color: white;
             border: none;
-            color: var(--panel-bg);
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-            margin-top: 5px;
-        }
-
-        .btn:hover {
-            background: #9e103a;
-        }
-
-        #right-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-        }
-
-        #game-area-container {
-            flex: 1;
-            background: var(--item-bg);
-            border-radius: 12px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        #game-area {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            overflow: hidden;
-        }
-
-        #timeline-container {
-            padding: 10px 0;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        #timeline {
-            flex: 1;
-            height: 10px;
-            background: #2b2129;
             border-radius: 5px;
             cursor: pointer;
-            position: relative;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background: #9e103a;
+            transform: translateY(-2px);
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .file-upload-btn {
+            padding: 8px 12px;
+            background: var(--accent);
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        .file-upload-btn:hover {
+            background: #9e103a;
+        }
+        
+        #audio-info {
+            margin-left: auto;
+            color: var(--text-light);
+            opacity: 0.8;
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        #game-area-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            border-radius: 5px;
             overflow: hidden;
         }
-
+        
+        #game-area {
+            position: relative;
+            width: 100%;
+            height: 80vh;
+            overflow: hidden;
+        }
+        
+        #timeline-container {
+            padding: 10px;
+            background: var(--bg2);
+        }
+        
+        #timeline {
+            width: 100%;
+            height: 40px;
+            background: #2b2129;
+            position: relative;
+            cursor: pointer;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
         #progress-bar {
             height: 100%;
             width: 0;
             background: var(--accent);
-            position: absolute;
-            left: 0;
-            top: 0;
+            opacity: 0.7;
         }
-
+        
         #current-time {
-            font-size: 0.9rem;
-            font-weight: 600;
-            min-width: 50px;
-            text-align: center;
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            font-size: 14px;
         }
-
-        #audio-controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .audio-btn {
-            flex: 1;
-            background: var(--accent);
-            border: none;
-            color: var(--panel-bg);
-            padding: 8px;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
+        
         .note {
             position: absolute;
             width: 50px;
@@ -216,100 +145,99 @@
             user-select: none;
             opacity: 0;
             transition: opacity 0.3s, transform 0.3s;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
             z-index: 10;
-            font-size: 18px;
         }
-
+        
         .note.visible {
             opacity: 1;
         }
-
+        
         .note.A { background: #ff5c5c; }
         .note.S { background: #5cff5c; }
         .note.D { background: #5c5cff; }
         .note.F { background: #ffff5c; color: #000; }
         .note.RMB { background: #ff5cff; }
-
+        
         .note.fade-out {
             opacity: 0;
             transform: scale(1.5);
         }
-
-        input[type="file"] {
-            display: none;
+        
+        #duration-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-
-        .mode-btn {
-            background: #3b2f36;
-            border: 1px solid var(--accent);
+        
+        #duration-value {
+            min-width: 40px;
+            text-align: center;
+            font-weight: bold;
         }
-
-        .mode-btn.active {
+        
+        #key-selector {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .key-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .key-btn.active {
             background: var(--accent);
-            color: var(--panel-bg);
+            transform: scale(1.1);
         }
     </style>
 </head>
 <body>
     <div id="editor-container">
-        <div id="left-panel">
-            <div id="editor-title">FIGHTIFY EDITOR</div>
+        <div id="toolbar">
+            <label for="audio-upload" class="file-upload-btn">Загрузить аудио</label>
+            <input type="file" id="audio-upload" accept="audio/*">
             
-            <div class="control-group">
-                <h3>Note Keys</h3>
-                <div id="key-selector">
-                    <div class="key-btn active" data-key="A">A</div>
-                    <div class="key-btn" data-key="S">S</div>
-                    <div class="key-btn" data-key="D">D</div>
-                    <div class="key-btn" data-key="F">F</div>
-                    <div class="key-btn" data-key="RMB">RMB</div>
-                </div>
+            <button id="play-btn">▶️ Play</button>
+            <div id="current-time">0:00</div>
+            
+            <div id="key-selector">
+                <div class="key-btn active" data-key="A">A</div>
+                <div class="key-btn" data-key="S">S</div>
+                <div class="key-btn" data-key="D">D</div>
+                <div class="key-btn" data-key="F">F</div>
+                <div class="key-btn" data-key="RMB">⨀</div>
             </div>
             
-            <div class="control-group">
-                <h3>Note Settings</h3>
-                <div>Display Duration:</div>
-                <div id="duration-control">
-                    <input type="range" id="note-duration" min="0.5" max="3" step="0.25" value="1.75">
-                    <span id="duration-value">1.75s</span>
-                </div>
+            <button id="mode-toggle">Режим: Редактор</button>
+            
+            <div id="duration-control">
+                <span>Длит.:</span>
+                <input type="range" id="note-duration" min="0.5" max="3" step="0.25" value="1.75">
+                <span id="duration-value">1.75s</span>
             </div>
             
-            <div class="control-group">
-                <h3>Mode</h3>
-                <button id="mode-toggle" class="btn mode-btn active">EDITOR</button>
-            </div>
+            <button id="export-btn">Экспорт ZIP</button>
+            <label for="import-btn" class="file-upload-btn">Импорт ZIP</label>
+            <input type="file" id="import-btn" accept=".zip">
             
-            <div class="control-group">
-                <h3>Project</h3>
-                <button id="import-btn" class="btn">IMPORT ZIP</button>
-                <button id="export-btn" class="btn">EXPORT ZIP</button>
-                <input type="file" id="file-import" accept=".zip" style="display:none">
-            </div>
-            
-            <div class="control-group">
-                <h3>Audio</h3>
-                <button id="load-audio" class="btn">LOAD AUDIO</button>
-                <input type="file" id="audio-upload" accept="audio/*" style="display:none">
-                <div id="audio-info" style="margin-top:10px;font-size:0.9rem;color:#aaa;">No audio loaded</div>
-            </div>
+            <div id="audio-info">Аудио не загружено</div>
         </div>
         
-        <div id="right-panel">
-            <div id="game-area-container">
-                <div id="game-area"></div>
-            </div>
-            
+        <div id="game-area-container">
+            <div id="game-area"></div>
             <div id="timeline-container">
-                <div id="current-time">0:00</div>
                 <div id="timeline">
                     <div id="progress-bar"></div>
+                    <div id="current-time">0:00</div>
                 </div>
-            </div>
-            
-            <div id="audio-controls">
-                <button id="play-btn" class="audio-btn">PLAY</button>
             </div>
         </div>
     </div>
@@ -331,22 +259,19 @@
 
         // Элементы DOM
         const elements = {
-            editorContainer: document.getElementById('editor-container'),
-            gameArea: document.getElementById('game-area'),
+            audioUpload: document.getElementById('audio-upload'),
+            playBtn: document.getElementById('play-btn'),
+            currentTime: document.getElementById('current-time'),
+            modeToggle: document.getElementById('mode-toggle'),
+            audioInfo: document.getElementById('audio-info'),
             timeline: document.getElementById('timeline'),
             progressBar: document.getElementById('progress-bar'),
-            currentTime: document.getElementById('current-time'),
-            playBtn: document.getElementById('play-btn'),
-            modeToggle: document.getElementById('mode-toggle'),
-            keyButtons: document.querySelectorAll('.key-btn'),
+            gameArea: document.getElementById('game-area'),
             durationSlider: document.getElementById('note-duration'),
             durationValue: document.getElementById('duration-value'),
-            audioUpload: document.getElementById('audio-upload'),
-            loadAudioBtn: document.getElementById('load-audio'),
-            audioInfo: document.getElementById('audio-info'),
-            importBtn: document.getElementById('import-btn'),
+            keyButtons: document.querySelectorAll('.key-btn'),
             exportBtn: document.getElementById('export-btn'),
-            fileImport: document.getElementById('file-import')
+            importBtn: document.getElementById('import-btn')
         };
 
         // Инициализация
@@ -358,7 +283,6 @@
         // Настройка обработчиков событий
         const setupEventListeners = () => {
             // Аудио
-            elements.loadAudioBtn.addEventListener('click', () => elements.audioUpload.click());
             elements.audioUpload.addEventListener('change', handleAudioUpload);
             
             // Плеер
@@ -384,10 +308,9 @@
             // Ноты
             elements.gameArea.addEventListener('click', handleNotePlacement);
             
-            // Импорт/экспорт
-            elements.importBtn.addEventListener('click', () => elements.fileImport.click());
+            // Экспорт/импорт
             elements.exportBtn.addEventListener('click', exportProject);
-            elements.fileImport.addEventListener('change', importProject);
+            elements.importBtn.addEventListener('change', importProject);
             
             // Горячие клавиши
             document.addEventListener('keydown', handleKeyPress);
@@ -412,23 +335,23 @@
             state.audio.addEventListener('timeupdate', updateAudioState);
             state.audio.addEventListener('ended', () => {
                 state.isPlaying = false;
-                elements.playBtn.textContent = 'PLAY';
+                elements.playBtn.textContent = '▶️ Play';
             });
         };
 
         // Управление воспроизведением
         const togglePlay = () => {
             if (!state.audio) {
-                alert("Please load audio first!");
+                alert("Сначала загрузите аудио!");
                 return;
             }
 
             if (state.isPlaying) {
                 state.audio.pause();
-                elements.playBtn.textContent = 'PLAY';
+                elements.playBtn.textContent = '▶️ Play';
             } else {
                 state.audio.play();
-                elements.playBtn.textContent = 'PAUSE';
+                elements.playBtn.textContent = '⏸️ Pause';
             }
             state.isPlaying = !state.isPlaying;
         };
@@ -469,8 +392,7 @@
         // Переключение режима редактор/тест
         const toggleMode = () => {
             state.mode = state.mode === 'editor' ? 'test' : 'editor';
-            elements.modeToggle.textContent = state.mode === 'editor' ? 'EDITOR' : 'TEST';
-            elements.modeToggle.classList.toggle('active', state.mode === 'editor');
+            elements.modeToggle.textContent = `Режим: ${state.mode === 'editor' ? 'Редактор' : 'Тест'}`;
             clearRenderedNotes();
             
             if (state.mode === 'test' && state.audio) {
@@ -508,39 +430,13 @@
             renderNote(note);
         };
 
-        // Обновление состояния аудио
-        const updateAudioState = () => {
-            if (!state.audio) return;
-            
-            state.currentTime = state.audio.currentTime;
-            updateProgressBar();
-            
-            if (state.mode === 'test') {
-                renderTestNotes();
-            }
-        };
-
         // Рендер одной ноты
         const renderNote = (note) => {
             if (note.deleted) return;
             
             const noteElement = document.createElement('div');
             noteElement.className = `note ${note.key}`;
-            
-            // Улучшенное отображение клавиш
-            if (note.key === 'RMB') {
-                noteElement.innerHTML = '<i class="fas fa-mouse-pointer"></i>';
-                // Добавляем FontAwesome динамически
-                if (!document.querySelector('link[href*="font-awesome"]')) {
-                    const fa = document.createElement('link');
-                    fa.rel = 'stylesheet';
-                    fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
-                    document.head.appendChild(fa);
-                }
-            } else {
-                noteElement.textContent = note.key;
-            }
-            
+            noteElement.textContent = note.key === 'RMB' ? '⨀' : note.key;
             noteElement.style.left = `${note.x}%`;
             noteElement.style.top = `${note.y}%`;
             noteElement.dataset.time = note.time;
@@ -593,31 +489,9 @@
             });
         };
 
-        // Обновление нот в редакторе
-        const updateEditorNotes = () => {
-            if (state.mode !== 'editor' || !state.audio) return;
-            
-            state.notes.forEach(note => {
-                if (note.deleted) return;
-                
-                const timeDiff = Math.abs(note.time - state.currentTime);
-                const shouldBeVisible = timeDiff <= 0.1;
-                
-                if (note.element) {
-                    if (shouldBeVisible && !note.element.classList.contains('visible')) {
-                        note.element.classList.add('visible');
-                    } else if (!shouldBeVisible && note.element.classList.contains('visible')) {
-                        note.element.classList.remove('visible');
-                    }
-                }
-            });
-        };
-
         // Обработка клика по ноте
         const handleNoteClick = (e) => {
-            const noteElement = e.target.closest('.note');
-            if (!noteElement) return;
-            
+            const noteElement = e.target;
             const noteTime = parseFloat(noteElement.dataset.time);
             const noteKey = noteElement.dataset.key;
             
@@ -687,7 +561,7 @@
         // Экспорт проекта в ZIP
         const exportProject = async () => {
             if (!state.audioFile) {
-                alert("Please load audio first!");
+                alert("Сначала загрузите аудио!");
                 return;
             }
 
@@ -719,7 +593,7 @@
                 
             } catch (error) {
                 console.error("Export error:", error);
-                alert("Error exporting project!");
+                alert("Ошибка экспорта!");
             }
         };
 
@@ -736,7 +610,7 @@
                 const audioFile = zip.file(/\.(mp3|wav|ogg)$/i)[0];
                 
                 if (!mapFile) {
-                    throw new Error("Map data not found in ZIP");
+                    throw new Error("Файл карты не найден");
                 }
                 
                 // Загружаем данные карты
@@ -769,11 +643,11 @@
                 // Рендерим ноты
                 renderAllNotes();
                 
-                alert("Project imported successfully!");
+                alert("Проект успешно импортирован!");
                 
             } catch (error) {
                 console.error("Import error:", error);
-                alert("Error importing project!");
+                alert("Ошибка импорта!");
             }
             
             // Сбрасываем input чтобы можно было загрузить тот же файл снова
