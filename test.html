@@ -208,17 +208,10 @@
         div.style.cursor = 'pointer';
         div.onclick = (e) => {
           e.stopPropagation();
-          if (mode === 'edit') {
-            // В редакторе клик удаляет ноту
-            notes = notes.filter(n => n.id !== note.id);
-          } else if (mode === 'test') {
-            // В тесте клик по ноте — попытка "попасть" по ноте (fade)
-            fadeOutNote(note.id);
-          }
-          renderNotes();
+          fadeOutNote(note.id); // Используем анимацию удаления и там, и там
         };
-
       }
+
 
       editorArea.appendChild(div);
     });
