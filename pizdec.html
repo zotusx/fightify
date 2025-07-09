@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fightify Editor</title>
+  <style>
+    body {
+      background: #0d0d0d;
+      color: white;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    #controls {
+      padding: 10px;
+      background: #1a1a1a;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    button, select, input[type="file"] {
+      background: #333;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+
+    canvas {
+      display: block;
+      background: #222;
+    }
+  </style>
+</head>
+<body>
+
+<div id="controls">
+  <input type="file" id="audioFile" accept="audio/*" />
+  <button id="playBtn">▶️</button>
+  <button id="rewindBtn">⏪</button>
+  <button id="forwardBtn">⏩</button>
+  <button id="modeBtn">Режим: Редактирование</button>
+  <span id="timeDisplay">0.00s</span>
+</div>
+
+<canvas id="canvas" width="1000" height="300"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const audio = new Audio();
+let audioBuffer = null;
+let isPlaying = false;
+let isEditorMode = true;
+let notes = []; // { time, key }
+const keys = ['A', 'S', 'D', 'F', 'RMB'];
+const keyMap = { 'a': 0, 's': 1, 'd': 2, 'f': 3, 'mouse': 4 };
+
+document.getElementById("audioFile").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const url = URL.createObjectURL(file);
+    audio.src = url;
+  }
+});
+
+document.getElementById("playBtn").addEventListener("click", () => {
+  if (audio.src) {
+    if (audio.paused) {
+      audio.play();
+      isPlaying = true;
+    } else {
+      audio.pause();
+      isPlaying = false;
+    }
+  }
+});
+
+document.getElementById("rewindBtn").addEventListener("click", () => {
+  audio.currentTime = Math.max(0, audio.currentTime - 2);
+});
+
+document.getElementById("forwardBtn").addEventListener("click", () => {
+  audio.currentTime = Math.min(audio.duration, audio.currentTime + 2);
+});
+
+document.getElementById("modeBtn").addEventListener("click", () => {
+  isEditorMode = !isEditorMode;
+  document.getElementById("modeBtn").textContent = `Режим: ${isEditorMode ? "Редактирование" : "Тест"}`;
+});
+
+document.addEventListener("keydown", (e) => {
+  if (!isEditorMode || !keys.includes(e.key.toUpperCase())) return;
+  const keyIndex = keyMap[e.key.toLowerCase()];
+  notes.push({ time: audio.currentTime, key: keyIndex });
+});
+
+canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+canvas.addEventListener("mousedown", (e) => {
+  if (!isEditorMode) return;
+  if (e.button === 2) { // ПКМ
+    notes.push({ time: audio.currentTime, key: 4 });
+  }
+});
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const now = audio.currentTime;
+
+  // Расстояние по времени в секундах на 1000px
+  const timelineLength = 30; // сек на ширину
+  const pixelsPerSecond = canvas.width / timelineLength;
+
+  // Нарисуем горизонтальные ряды для клавиш
+  for (let i = 0; i < keys.length; i++) {
+    ctx.fillStyle = "#333";
+    ctx.fillRect(0, i * 60 + 20, canvas.width, 2);
+    ctx.fillStyle = "#aaa";
+    ctx.fillText(keys[i], 10, i * 60 + 15);
+  }
+
+  // Отрисовка всех нот
+  for (const note of notes) {
+    const x = (note.time - now + timelineLength / 2) * pixelsPerSecond;
+    const y = note.key * 60 + 30;
+
+    if (x >= 0 && x <= canvas.width) {
+      ctx.fillStyle = isEditorMode ? "#0ff" : "#f33";
+      ctx.beginPath();
+      ctx.arc(x, y, 8, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+  }
+
+  // Центр таймлайна (текущее время)
+  ctx.strokeStyle = "#fff";
+  ctx.beginPath();
+  ctx.moveTo(canvas.width / 2, 0);
+  ctx.lineTo(canvas.width / 2, canvas.height);
+  ctx.stroke();
+
+  document.getElementById("timeDisplay").textContent = `${now.toFixed(2)}s`;
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+
+</body>
+</html>
