@@ -259,262 +259,258 @@
         </div>
     </div>
 
-    <script>
-        // Состояние редактора // Состояние редактора
-        const state = {
-            audio: null,
-            isPlaying: false,
-            currentTime: 0,
-            duration: 0,
-            mode: 'editor',
-            notes: [],
-            selectedKey: 'A',
-            noteDuration: 1.75,
-            renderedNotes: new Map(),
-            score: 0,
-            totalNotes: 0,
-            hitWindow: 0.3
-        };
+<script>
+    // Состояние редактора
+    const state = {
+        audio: null,
+        isPlaying: false,
+        currentTime: 0,
+        duration: 0,
+        mode: 'editor',
+        notes: [],
+        selectedKey: 'A',
+        noteDuration: 1.75,
+        renderedNotes: new Map(),
+        score: 0,
+        totalNotes: 0,
+        hitWindow: 0.3
+    };
 
     // Элементы DOM
-        const elements = {
-            audioUpload: document.getElementById('audio-upload'),
-            playBtn: document.getElementById('play-btn'),
-            currentTime: document.getElementById('current-time'),
-            modeToggle: document.getElementById('mode-toggle'),
-            audioInfo: document.getElementById('audio-info'),
-            timeline: document.getElementById('timeline'),
-            progressBar: document.getElementById('progress-bar'),
-            gameArea: document.getElementById('game-area'),
-            durationSlider: document.getElementById('note-duration'),
-            durationValue: document.getElementById('duration-value'),
-            keyButtons: document.querySelectorAll('.key-btn'),
-            scoreDisplay: document.getElementById('score-display')
-        };
+    const elements = {
+        audioUpload: document.getElementById('audio-upload'),
+        playBtn: document.getElementById('play-btn'),
+        currentTime: document.getElementById('current-time'),
+        modeToggle: document.getElementById('mode-toggle'),
+        audioInfo: document.getElementById('audio-info'),
+        timeline: document.getElementById('timeline'),
+        progressBar: document.getElementById('progress-bar'),
+        gameArea: document.getElementById('game-area'),
+        durationSlider: document.getElementById('note-duration'),
+        durationValue: document.getElementById('duration-value'),
+        keyButtons: document.querySelectorAll('.key-btn'),
+        scoreDisplay: document.getElementById('score-display')
+    };
 
     // Инициализация
-        init();
+    init();
 
-        function init() {
-            setupEventListeners();
-            updateKeyButtons();
-        }
+    function init() {
+        setupEventListeners();
+        updateKeyButtons();
+    }
 
-        function setupEventListeners() {
-            elements.audioUpload.addEventListener('change', handleAudioUpload);
-            elements.playBtn.addEventListener('click', togglePlay);
-            elements.timeline.addEventListener('click', handleTimelineClick);
+    function setupEventListeners() {
+        elements.audioUpload.addEventListener('change', handleAudioUpload);
+        elements.playBtn.addEventListener('click', togglePlay);
+        elements.timeline.addEventListener('click', handleTimelineClick);
         
-            elements.keyButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    state.selectedKey = btn.dataset.key;
-                    updateKeyButtons();
-                });
+        elements.keyButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.selectedKey = btn.dataset.key;
+                updateKeyButtons();
             });
-            
-            elements.modeToggle.addEventListener('click', toggleMode);
-            elements.durationSlider.addEventListener('input', updateDuration);
-            elements.gameArea.addEventListener('mousedown', handleNoteClick); // Изменено на mousedown
-            document.addEventListener('keydown', handleKeyPress);
+        });
         
-            setInterval(updateEditorNotes, 100);
+        elements.modeToggle.addEventListener('click', toggleMode);
+        elements.durationSlider.addEventListener('input', updateDuration);
+        elements.gameArea.addEventListener('mousedown', handleNoteClick);
+        elements.gameArea.addEventListener('click', handleNotePlacement);
+        document.addEventListener('keydown', handleKeyPress);
+        
+        setInterval(updateEditorNotes, 100);
+    }
+
+    function handleAudioUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        state.audio = new Audio(URL.createObjectURL(file));
+        state.audio.addEventListener('loadedmetadata', () => {
+            state.duration = state.audio.duration;
+            elements.audioInfo.textContent = file.name;
+        });
+
+        state.audio.addEventListener('timeupdate', updateAudioState);
+        state.audio.addEventListener('ended', () => {
+            state.isPlaying = false;
+            elements.playBtn.textContent = '▶️ Play';
+        });
+    }
+
+    function togglePlay() {
+        if (!state.audio) return;
+
+        if (state.isPlaying) {
+            state.audio.pause();
+        } else {
+            state.audio.play();
         }
+        state.isPlaying = !state.isPlaying;
+        elements.playBtn.textContent = state.isPlaying ? '⏸️ Pause' : '▶️ Play';
+    }
 
-        function handleAudioUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+    function handleTimelineClick(e) {
+        if (!state.audio) return;
+        const rect = elements.timeline.getBoundingClientRect();
+        const pos = (e.clientX - rect.left) / rect.width;
+        state.audio.currentTime = pos * state.duration;
+    }
 
-            state.audio = new Audio(URL.createObjectURL(file));
-            state.audio.addEventListener('loadedmetadata', () => {
-                state.duration = state.audio.duration;
-                elements.audioInfo.textContent = file.name;
-            });
+    function updateKeyButtons() {
+        elements.keyButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.key === state.selectedKey);
+        });
+    }
 
-            state.audio.addEventListener('timeupdate', updateAudioState);
-            state.audio.addEventListener('ended', () => {
-                state.isPlaying = false;
-                elements.playBtn.textContent = '▶️ Play';
-            });
+    function toggleMode() {
+        state.mode = state.mode === 'editor' ? 'test' : 'editor';
+        elements.modeToggle.textContent = state.mode === 'editor' ? 'Редактор' : 'Тест';
+        elements.modeToggle.classList.toggle('active', state.mode === 'editor');
+        clearRenderedNotes();
+        
+        if (state.mode === 'test') {
+            state.score = 0;
+            state.totalNotes = state.notes.filter(n => !n.deleted).length;
+            updateScoreDisplay();
+            elements.scoreDisplay.style.display = 'block';
+        } else {
+            elements.scoreDisplay.style.display = 'none';
         }
-
-        function togglePlay() {
-            if (!state.audio) return;
-
-            if (state.isPlaying) {
-                state.audio.pause();
-            } else {
-                state.audio.play();
-            }
-            state.isPlaying = !state.isPlaying;
-            elements.playBtn.textContent = state.isPlaying ? '⏸️ Pause' : '▶️ Play';
+        
+        if (state.mode === 'test' && state.audio) {
+            state.audio.currentTime = 0;
+            if (state.isPlaying) state.audio.play();
         }
+    }
 
-        function handleTimelineClick(e) {
-            if (!state.audio) return;
-            const rect = elements.timeline.getBoundingClientRect();
-            const pos = (e.clientX - rect.left) / rect.width;
-            state.audio.currentTime = pos * state.duration;
+    function updateDuration(e) {
+        state.noteDuration = parseFloat(e.target.value);
+        elements.durationValue.textContent = `${e.target.value}s`;
+    }
+
+    function handleNotePlacement(e) {
+        if (state.mode !== 'editor' || !state.audio || e.button === 2) return;
+
+        const rect = elements.gameArea.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const note = {
+            x: (x / rect.width) * 100,
+            y: (y / rect.height) * 100,
+            time: state.currentTime,
+            key: state.selectedKey,
+            deleted: false,
+            element: null
+        };
+
+        state.notes.push(note);
+        renderNote(note);
+    }
+
+    function updateAudioState() {
+        if (!state.audio) return;
+        
+        state.currentTime = state.audio.currentTime;
+        updateProgressBar();
+        
+        if (state.mode === 'test') {
+            renderTestNotes();
         }
+    }
 
-        function updateKeyButtons() {
-            elements.keyButtons.forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.key === state.selectedKey);
-            });
-        }
+    function updateProgressBar() {
+        const progress = (state.currentTime / state.duration) * 100;
+        elements.progressBar.style.width = `${progress}%`;
+        
+        const minutes = Math.floor(state.currentTime / 60);
+        const seconds = Math.floor(state.currentTime % 60).toString().padStart(2, '0');
+        elements.currentTime.textContent = `${minutes}:${seconds}`;
+    }
 
-        function toggleMode() {
-            state.mode = state.mode === 'editor' ? 'test' : 'editor';
-            elements.modeToggle.textContent = state.mode === 'editor' ? 'Редактор' : 'Тест';
-            elements.modeToggle.classList.toggle('active', state.mode === 'editor');
-            clearRenderedNotes();
-            
-            if (state.mode === 'test') {
-                state.score = 0;
-                state.totalNotes = state.notes.filter(n => !n.deleted).length;
-                updateScoreDisplay();
-                elements.scoreDisplay.style.display = 'block';
-            } else {
-                elements.scoreDisplay.style.display = 'none';
-            }
-            
-            if (state.mode === 'test' && state.audio) {
-                state.audio.currentTime = 0;
-                if (state.isPlaying) state.audio.play();
-            }
-        }
+    function renderNote(note) {
+        if (note.deleted) return;
+        
+        const noteElement = document.createElement('div');
+        noteElement.className = `note ${note.key} visible`;
+        noteElement.textContent = note.key === 'RMB' ? '⨀' : note.key;
+        noteElement.style.left = `${note.x}%`;
+        noteElement.style.top = `${note.y}%`;
+        noteElement.dataset.time = note.time;
+        noteElement.dataset.key = note.key;
+        
+        elements.gameArea.appendChild(noteElement);
+        note.element = noteElement;
+        state.renderedNotes.set(`${note.time}-${note.key}`, noteElement);
+    }
 
-        function updateDuration(e) {
-            state.noteDuration = parseFloat(e.target.value);
-            elements.durationValue.textContent = `${e.target.value}s`;
-        }
+    function renderTestNotes() {
+        const currentTime = state.currentTime;
+        const halfDuration = state.noteDuration / 2;
 
-        function handleNotePlacement(e) {
-            if (state.mode !== 'editor' || !state.audio) return;
-            if (e.button === 2) return; // Игнорируем правую кнопку мыши
-
-            const rect = elements.gameArea.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            const note = {
-                x: (x / rect.width) * 100,
-                y: (y / rect.height) * 100,
-                time: state.currentTime,
-                key: state.selectedKey,
-                deleted: false,
-                element: null
-            };
-
-            state.notes.push(note);
-            renderNote(note);
-        }
-
-        function updateAudioState() {
-            if (!state.audio) return;
-            
-            state.currentTime = state.audio.currentTime;
-            updateProgressBar();
-            
-            if (state.mode === 'test') {
-                renderTestNotes();
-            }
-        }
-
-        function updateProgressBar() {
-            const progress = (state.currentTime / state.duration) * 100;
-            elements.progressBar.style.width = `${progress}%`;
-            
-            const minutes = Math.floor(state.currentTime / 60);
-            const seconds = Math.floor(state.currentTime % 60).toString().padStart(2, '0');
-            elements.currentTime.textContent = `${minutes}:${seconds}`;
-        }
-
-        function renderNote(note) {
+        state.notes.forEach(note => {
             if (note.deleted) return;
             
-            const noteElement = document.createElement('div');
-            noteElement.className = `note ${note.key} visible`;
-            noteElement.textContent = note.key === 'RMB' ? '⨀' : note.key;
-            noteElement.style.left = `${note.x}%`;
-            noteElement.style.top = `${note.y}%`;
-            noteElement.dataset.time = note.time;
-            noteElement.dataset.key = note.key;
+            const noteTime = note.time;
+            const startTime = noteTime - halfDuration;
+            const endTime = noteTime + halfDuration;
+
+            const shouldBeVisible = currentTime >= startTime && currentTime <= endTime;
+            const isRendered = state.renderedNotes.has(`${note.time}-${note.key}`);
             
-            if (state.mode === 'test') {
-                noteElement.addEventListener('click', handleNoteClick);
+            if (shouldBeVisible && !isRendered) {
+                renderNote(note);
+            } else if (!shouldBeVisible && isRendered) {
+                removeNoteElement(note);
             }
-            
-            elements.gameArea.appendChild(noteElement);
-            note.element = noteElement;
-            state.renderedNotes.set(`${note.time}-${note.key}`, noteElement);
-        }
+        });
+    }
 
-        function renderTestNotes() {
-            const currentTime = state.currentTime;
-            const halfDuration = state.noteDuration / 2;
-
-            state.notes.forEach(note => {
-                if (note.deleted) return;
-                
-                const noteTime = note.time;
-                const startTime = noteTime - halfDuration;
-                const endTime = noteTime + halfDuration;
-
-                const shouldBeVisible = currentTime >= startTime && currentTime <= endTime;
-                const isRendered = state.renderedNotes.has(`${note.time}-${note.key}`);
-                
-                if (shouldBeVisible && !isRendered) {
-                    renderNote(note);
-                } else if (!shouldBeVisible && isRendered) {
-                    removeNoteElement(note);
-                }
-            });
-        }
-
-        function updateEditorNotes() {
-            if (state.mode !== 'editor' || !state.audio) return;
-            
-            state.notes.forEach(note => {
-                if (note.deleted) return;
-                
-                const timeDiff = Math.abs(note.time - state.currentTime);
-                const shouldBeVisible = timeDiff <= 0.1;
-                
-                if (note.element) {
-                    if (shouldBeVisible && !note.element.classList.contains('visible')) {
-                        note.element.classList.add('visible');
-                    } else if (!shouldBeVisible && note.element.classList.contains('visible')) {
-                        note.element.classList.remove('visible');
-                    }
-                }
-            });
-        }
+    function updateEditorNotes() {
+        if (state.mode !== 'editor' || !state.audio) return;
         
-        function handleNoteClick(e) {
-           if (state.mode !== 'test') return;
-        
+        state.notes.forEach(note => {
+            if (note.deleted) return;
+            
+            const timeDiff = Math.abs(note.time - state.currentTime);
+            const shouldBeVisible = timeDiff <= 0.1;
+            
+            if (note.element) {
+                if (shouldBeVisible && !note.element.classList.contains('visible')) {
+                    note.element.classList.add('visible');
+                } else if (!shouldBeVisible && note.element.classList.contains('visible')) {
+                    note.element.classList.remove('visible');
+                }
+            }
+        });
+    }
+    
+    function handleNoteClick(e) {
+        if (state.mode !== 'test') return;
+    
         // Для RMB нот - только правая кнопка мыши
-            if (e.target.classList.contains('RMB')) {
-                if (e.button !== 2) return; // Только ПКМ
-            } 
-        // Для других нот - только левая кнопка мыши
-            else {
-                if (e.button !== 0) return; // Только ЛКМ
-            }
-
-            const noteElement = e.target;
-            const noteTime = parseFloat(noteElement.dataset.time);
-            const noteKey = noteElement.dataset.key;
-        
-            markNoteAsDeleted(noteTime, noteKey);
-            animateNoteRemoval(noteElement);
-            state.renderedNotes.delete(`${noteTime}-${noteKey}`);
-        
-            state.score++;
-            updateScoreDisplay();
+        if (e.target.classList.contains('RMB')) {
+            if (e.button !== 2) return;
+        } 
+        // Для других нот - только левая кнопка мыши и если выбрана соответствующая клавиша
+        else {
+            if (e.button !== 0 || e.target.dataset.key !== state.selectedKey) return;
         }
 
-        function handleKeyPress(e) {
+        const noteElement = e.target;
+        const noteTime = parseFloat(noteElement.dataset.time);
+        const noteKey = noteElement.dataset.key;
+    
+        markNoteAsDeleted(noteTime, noteKey);
+        animateNoteRemoval(noteElement);
+        state.renderedNotes.delete(`${noteTime}-${noteKey}`);
+    
+        state.score++;
+        updateScoreDisplay();
+    }
+
+    function handleKeyPress(e) {
         if (state.mode !== 'test') return;
         
         const keyMap = {
@@ -533,7 +529,7 @@
         
         if (visibleNotes.length === 0) return;
         
-        // Находим ближайшую ноту
+        // Находим ноту, время которой ближе всего к текущему
         let closestNote = null;
         let smallestDiff = Infinity;
         
@@ -559,45 +555,41 @@
             updateScoreDisplay();
         }
     }
-        function markNoteAsDeleted(time, key) {
-            const noteIndex = state.notes.findIndex(n => 
-                Math.abs(n.time - time) < 0.01 && 
-                n.key === key && 
-                !n.deleted
-            );
+
+    function markNoteAsDeleted(time, key) {
+        const noteIndex = state.notes.findIndex(n => 
+            Math.abs(n.time - time) < 0.01 && 
+            n.key === key && 
+            !n.deleted
+        );
         
-            if (noteIndex !== -1) {
-                state.notes[noteIndex].deleted = true;
-            }
+        if (noteIndex !== -1) {
+            state.notes[noteIndex].deleted = true;
         }
+    }
 
-        function animateNoteRemoval(element) {
-            element.classList.add('fade-out');
-            setTimeout(() => {
-                element.remove();
-            }, 300);
+    function removeNoteElement(note) {
+        if (note.element) {
+            note.element.remove();
+            state.renderedNotes.delete(`${note.time}-${note.key}`);
         }
+    }
 
-        function updateScoreDisplay() {
-            elements.scoreDisplay.textContent = `Score: ${state.score} / ${state.totalNotes}`;
-        }    
+    function animateNoteRemoval(element) {
+        element.classList.add('fade-out');
+        setTimeout(() => {
+            element.remove();
+        }, 300);
+    }
 
-        function markNoteAsDeleted(time, key) {
-            const noteIndex = state.notes.findIndex(n => 
-                Math.abs(n.time - time) < 0.01 && 
-                n.key === key && 
-                !n.deleted
-            );
-            
-            if (noteIndex !== -1) {
-                state.notes[noteIndex].deleted = true;
-            }
-        }
+    function clearRenderedNotes() {
+        state.renderedNotes.forEach(element => element.remove());
+        state.renderedNotes.clear();
+    }
 
-        function clearRenderedNotes() {
-            state.renderedNotes.forEach(element => element.remove());
-            state.renderedNotes.clear();
-        }
-    </script>
+    function updateScoreDisplay() {
+        elements.scoreDisplay.textContent = `Score: ${state.score} / ${state.totalNotes}`;
+    }
+</script>
 </body>
 </html>
