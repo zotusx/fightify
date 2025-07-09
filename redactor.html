@@ -1,166 +1,208 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fightify Editor</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+
         :root {
-            --main-color: #6e45e2;
-            --secondary-color: #88d3ce;
-            --dark-bg: #1a1a2e;
-            --light-bg: #16213e;
-            --text-color: #ffffff;
+            --bg1: #5e4d53;
+            --bg2: #a61241;
+            --accent: #a61241;
+            --text-light: #eee;
+            --panel-bg: #3b2f36;
+            --item-bg: #4a3942;
         }
-        
+
         body {
-            font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 0;
-            background: var(--dark-bg);
-            color: var(--text-color);
+            font-family: 'Orbitron', sans-serif;
+            user-select: none;
+            height: 100vh;
+            overflow: hidden;
+            background: url('resources/bg_menu.png') no-repeat center center fixed;
+            background-size: cover;
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #editor-container {
+            width: 960px;
+            max-width: 95vw;
+            height: 520px;
+            background: var(--panel-bg);
+            border-radius: 16px;
+            box-shadow: 0 0 20px var(--accent);
+            display: flex;
             overflow: hidden;
         }
-        
-        #editor-container {
+
+        #left-panel {
+            width: 280px;
+            border-right: 2px solid var(--accent);
+            padding: 20px;
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            padding: 15px;
-            box-sizing: border-box;
-            background: linear-gradient(135deg, var(--dark-bg) 0%, var(--light-bg) 100%);
         }
-        
-        #toolbar {
-            display: flex;
-            gap: 10px;
-            padding: 12px;
-            background: rgba(0, 0, 0, 0.3);
+
+        #editor-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: var(--accent);
+            text-align: center;
+        }
+
+        .control-group {
+            background: var(--item-bg);
             border-radius: 12px;
+            padding: 15px;
             margin-bottom: 15px;
-            align-items: center;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            flex-wrap: wrap;
         }
-        
-        .toolbar-section {
+
+        .control-group h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.1rem;
+            color: var(--accent);
+        }
+
+        #key-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .key-btn {
+            padding: 10px;
+            background: #3b2f36;
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .key-btn.active {
+            background: var(--accent);
+            color: var(--panel-bg);
+            transform: scale(1.05);
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        #duration-control {
             display: flex;
+            align-items: center;
             gap: 10px;
-            align-items: center;
-            padding: 5px 10px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
+            margin-top: 10px;
         }
-        
-        button {
-            padding: 10px 15px;
-            background: var(--main-color);
-            color: white;
+
+        #duration-value {
+            min-width: 40px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .btn {
+            background: var(--accent);
             border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-        }
-        
-        button:hover {
-            background: var(--secondary-color);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
-        
-        input[type="file"] {
-            display: none;
-        }
-        
-        .file-upload-btn {
+            color: var(--panel-bg);
             padding: 10px 15px;
-            background: var(--main-color);
-            color: white;
             border-radius: 8px;
+            font-weight: 700;
             cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
+            transition: background 0.2s;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
+            width: 100%;
+            margin-top: 5px;
         }
-        
-        .file-upload-btn:hover {
-            background: var(--secondary-color);
+
+        .btn:hover {
+            background: #9e103a;
         }
-        
-        #audio-info {
-            margin-left: auto;
-            color: var(--text-color);
-            opacity: 0.9;
-            font-size: 14px;
-            max-width: 200px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        #game-area-container {
+
+        #right-panel {
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+
+        #game-area-container {
+            flex: 1;
+            background: var(--item-bg);
             border-radius: 12px;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
         }
-        
+
         #game-area {
-            position: relative;
             width: 100%;
-            height: 75vh;
-            background: rgba(0, 0, 0, 0.1);
+            height: 100%;
+            position: relative;
             overflow: hidden;
         }
-        
+
         #timeline-container {
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
-        
+
         #timeline {
-            width: 100%;
-            height: 40px;
-            background: rgba(0, 0, 0, 0.2);
-            position: relative;
+            flex: 1;
+            height: 10px;
+            background: #2b2129;
+            border-radius: 5px;
             cursor: pointer;
-            border-radius: 8px;
+            position: relative;
             overflow: hidden;
         }
-        
+
         #progress-bar {
             height: 100%;
             width: 0;
-            background: linear-gradient(90deg, var(--main-color) 0%, var(--secondary-color) 100%);
-            opacity: 0.7;
-        }
-        
-        #current-time {
+            background: var(--accent);
             position: absolute;
-            top: 50%;
-            left: 10px;
-            transform: translateY(-50%);
-            font-size: 14px;
-            font-weight: bold;
+            left: 0;
+            top: 0;
         }
-        
+
+        #current-time {
+            font-size: 0.9rem;
+            font-weight: 600;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        #audio-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .audio-btn {
+            flex: 1;
+            background: var(--accent);
+            border: none;
+            color: var(--panel-bg);
+            padding: 8px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
         .note {
             position: absolute;
             width: 50px;
@@ -174,151 +216,100 @@
             user-select: none;
             opacity: 0;
             transition: opacity 0.3s, transform 0.3s;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
             z-index: 10;
             font-size: 18px;
         }
-        
+
         .note.visible {
             opacity: 1;
         }
-        
+
         .note.A { background: #ff5c5c; }
         .note.S { background: #5cff5c; }
         .note.D { background: #5c5cff; }
         .note.F { background: #ffff5c; color: #000; }
         .note.RMB { background: #ff5cff; }
-        
+
         .note.fade-out {
             opacity: 0;
             transform: scale(1.5);
         }
-        
-        #duration-control {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 8px 12px;
-            border-radius: 8px;
+
+        input[type="file"] {
+            display: none;
         }
-        
-        #duration-value {
-            min-width: 40px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        
-        #key-selector {
-            display: flex;
-            gap: 5px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 8px;
-            border-radius: 8px;
-        }
-        
-        .key-btn {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: bold;
-        }
-        
-        .key-btn.active {
-            background: var(--main-color);
-            transform: scale(1.1);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-        
-        .key-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
+
         .mode-btn {
-            background: rgba(255, 255, 255, 0.1);
+            background: #3b2f36;
+            border: 1px solid var(--accent);
         }
-        
+
         .mode-btn.active {
-            background: var(--secondary-color);
+            background: var(--accent);
+            color: var(--panel-bg);
         }
     </style>
 </head>
 <body>
     <div id="editor-container">
-        <div id="toolbar">
-            <div class="toolbar-section">
-                <label for="audio-upload" class="file-upload-btn">
-                    <i class="fas fa-music"></i> Аудио
-                </label>
-                <input type="file" id="audio-upload" accept="audio/*">
-                
-                <button id="play-btn">
-                    <i class="fas fa-play"></i> Play
-                </button>
-                <div id="current-time">0:00</div>
-            </div>
+        <div id="left-panel">
+            <div id="editor-title">FIGHTIFY EDITOR</div>
             
-            <div class="toolbar-section">
+            <div class="control-group">
+                <h3>Note Keys</h3>
                 <div id="key-selector">
                     <div class="key-btn active" data-key="A">A</div>
                     <div class="key-btn" data-key="S">S</div>
                     <div class="key-btn" data-key="D">D</div>
                     <div class="key-btn" data-key="F">F</div>
-                    <div class="key-btn" data-key="RMB"><i class="fas fa-mouse-pointer"></i></div>
+                    <div class="key-btn" data-key="RMB">RMB</div>
                 </div>
             </div>
             
-            <div class="toolbar-section">
-                <button id="mode-toggle" class="mode-btn active">
-                    <i class="fas fa-edit"></i> Редактор
-                </button>
-                
+            <div class="control-group">
+                <h3>Note Settings</h3>
+                <div>Display Duration:</div>
                 <div id="duration-control">
-                    <span><i class="fas fa-clock"></i></span>
                     <input type="range" id="note-duration" min="0.5" max="3" step="0.25" value="1.75">
                     <span id="duration-value">1.75s</span>
                 </div>
             </div>
             
-            <div class="toolbar-section">
-                <button id="save-map-btn">
-                    <i class="fas fa-save"></i> Сохранить
-                </button>
-                
-                <label for="load-map-btn" class="file-upload-btn">
-                    <i class="fas fa-folder-open"></i> Загрузить
-                </label>
-                <input type="file" id="load-map-btn" accept=".json">
-                
-                <button id="export-all-btn">
-                    <i class="fas fa-file-export"></i> Экспорт
-                </button>
-                
-                <label for="import-all-btn" class="file-upload-btn">
-                    <i class="fas fa-file-import"></i> Импорт
-                </label>
-                <input type="file" id="import-all-btn" accept=".zip">
+            <div class="control-group">
+                <h3>Mode</h3>
+                <button id="mode-toggle" class="btn mode-btn active">EDITOR</button>
             </div>
             
-            <div id="audio-info">
-                <i class="fas fa-info-circle"></i> Аудио не загружено
+            <div class="control-group">
+                <h3>Project</h3>
+                <button id="import-btn" class="btn">IMPORT ZIP</button>
+                <button id="export-btn" class="btn">EXPORT ZIP</button>
+                <input type="file" id="file-import" accept=".zip" style="display:none">
+            </div>
+            
+            <div class="control-group">
+                <h3>Audio</h3>
+                <button id="load-audio" class="btn">LOAD AUDIO</button>
+                <input type="file" id="audio-upload" accept="audio/*" style="display:none">
+                <div id="audio-info" style="margin-top:10px;font-size:0.9rem;color:#aaa;">No audio loaded</div>
             </div>
         </div>
         
-        <div id="game-area-container">
-            <div id="game-area"></div>
+        <div id="right-panel">
+            <div id="game-area-container">
+                <div id="game-area"></div>
+            </div>
+            
             <div id="timeline-container">
+                <div id="current-time">0:00</div>
                 <div id="timeline">
                     <div id="progress-bar"></div>
-                    <div id="current-time">0:00</div>
                 </div>
+            </div>
+            
+            <div id="audio-controls">
+                <button id="play-btn" class="audio-btn">PLAY</button>
             </div>
         </div>
     </div>
@@ -340,269 +331,26 @@
 
         // Элементы DOM
         const elements = {
-            audioUpload: document.getElementById('audio-upload'),
-            playBtn: document.getElementById('play-btn'),
-            currentTime: document.getElementById('current-time'),
-            modeToggle: document.getElementById('mode-toggle'),
-            audioInfo: document.getElementById('audio-info'),
+            editorContainer: document.getElementById('editor-container'),
+            gameArea: document.getElementById('game-area'),
             timeline: document.getElementById('timeline'),
             progressBar: document.getElementById('progress-bar'),
-            gameArea: document.getElementById('game-area'),
+            currentTime: document.getElementById('current-time'),
+            playBtn: document.getElementById('play-btn'),
+            modeToggle: document.getElementById('mode-toggle'),
+            keyButtons: document.querySelectorAll('.key-btn'),
             durationSlider: document.getElementById('note-duration'),
             durationValue: document.getElementById('duration-value'),
-            keyButtons: document.querySelectorAll('.key-btn'),
-            saveMapBtn: document.getElementById('save-map-btn'),
-            loadMapBtn: document.getElementById('load-map-btn'),
-            exportAllBtn: document.getElementById('export-all-btn'),
-            importAllBtn: document.getElementById('import-all-btn')
-        };
-
-        // Инициализация IndexedDB
-        let db;
-        const initDB = () => {
-            return new Promise((resolve) => {
-                const request = indexedDB.open('FightifyDB', 1);
-                
-                request.onupgradeneeded = (e) => {
-                    db = e.target.result;
-                    if (!db.objectStoreNames.contains('maps')) {
-                        db.createObjectStore('maps', { keyPath: 'id' });
-                    }
-                    if (!db.objectStoreNames.contains('audio')) {
-                        db.createObjectStore('audio', { keyPath: 'name' });
-                    }
-                };
-
-                request.onsuccess = (e) => {
-                    db = e.target.result;
-                    resolve();
-                };
-
-                request.onerror = (e) => {
-                    console.error('IndexedDB error:', e.target.error);
-                    resolve();
-                };
-            });
-        };
-
-        // Сохранить данные в IndexedDB
-        const saveToDB = (storeName, data) => {
-            return new Promise((resolve) => {
-                if (!db) return resolve(false);
-                
-                const transaction = db.transaction(storeName, 'readwrite');
-                const store = transaction.objectStore(storeName);
-                const request = store.put(data);
-                
-                request.onsuccess = () => resolve(true);
-                request.onerror = () => resolve(false);
-            });
-        };
-
-        // Загрузить данные из IndexedDB
-        const loadFromDB = (storeName, key) => {
-            return new Promise((resolve) => {
-                if (!db) return resolve(null);
-                
-                const transaction = db.transaction(storeName, 'readonly');
-                const store = transaction.objectStore(storeName);
-                const request = store.get(key);
-                
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => resolve(null);
-            });
-        };
-
-        // Сохранить аудио в IndexedDB
-        const saveAudioToDB = async (file) => {
-            const reader = new FileReader();
-            return new Promise((resolve) => {
-                reader.onload = async (e) => {
-                    await saveToDB('audio', { name: file.name, data: e.target.result });
-                    resolve();
-                };
-                reader.readAsDataURL(file);
-            });
-        };
-
-        // Загрузить аудио из IndexedDB
-        const loadAudioFromDB = async (name) => {
-            const result = await loadFromDB('audio', name);
-            return result?.data;
-        };
-
-        // Сохранить текущую карту
-        const saveCurrentMap = async () => {
-            if (!state.audioFile || state.notes.length === 0) {
-                alert("Сначала загрузи аудио и добавь ноты!");
-                return;
-            }
-
-            const mapData = {
-                audioFileName: state.audioFile.name,
-                notes: state.notes.filter(note => !note.deleted),
-                duration: state.noteDuration
-            };
-
-            // Сохраняем в IndexedDB
-            await saveToDB('maps', {
-                id: Date.now(),
-                ...mapData
-            });
-
-            // Создаем JSON для скачивания
-            const json = JSON.stringify(mapData, null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `FightifyMap_${state.audioFile.name.split('.')[0]}_${Date.now()}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-
-            alert("Карта сохранена!");
-        };
-
-        // Загрузить карту из файла
-        const loadMapFile = (file) => {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const mapData = JSON.parse(e.target.result);
-                    
-                    // Очищаем текущие данные
-                    state.notes = [];
-                    clearRenderedNotes();
-                    
-                    // Загружаем новые
-                    state.notes = mapData.notes || [];
-                    state.noteDuration = mapData.duration || 1.75;
-                    elements.durationSlider.value = state.noteDuration;
-                    elements.durationValue.textContent = `${state.noteDuration}s`;
-                    
-                    // Проверяем аудио
-                    if (state.audioFile && state.audioFile.name === mapData.audioFileName) {
-                        console.log("Аудио уже загружено");
-                    } else {
-                        const loadAudio = confirm(`Для этой карты нужно аудио: "${mapData.audioFileName}". Загрузить сейчас?`);
-                        if (loadAudio) {
-                            document.getElementById('audio-upload').click();
-                        }
-                    }
-                    
-                    // Рендерим ноты в редакторе
-                    renderAllNotes();
-                } catch (error) {
-                    alert("Ошибка загрузки файла: неверный формат JSON!");
-                    console.error(error);
-                }
-            };
-            reader.readAsText(file);
-        };
-
-        // Рендер всех нот
-        const renderAllNotes = () => {
-            clearRenderedNotes();
-            state.notes.forEach(note => {
-                if (!note.deleted) {
-                    renderNote(note);
-                }
-            });
-        };
-
-        // Экспорт всех данных в ZIP
-        const exportAllData = async () => {
-            try {
-                const zip = new JSZip();
-                
-                // Добавляем все карты из IndexedDB
-                const maps = await new Promise((resolve) => {
-                    if (!db) return resolve([]);
-                    
-                    const transaction = db.transaction('maps', 'readonly');
-                    const store = transaction.objectStore('maps');
-                    const request = store.getAll();
-                    
-                    request.onsuccess = () => resolve(request.result || []);
-                    request.onerror = () => resolve([]);
-                });
-
-                maps.forEach((map, i) => {
-                    zip.file(`map_${i}.json`, JSON.stringify(map, null, 2));
-                });
-
-                // Добавляем текущее аудио (если есть)
-                if (state.audioFile) {
-                    const audioData = await loadAudioFromDB(state.audioFile.name);
-                    if (audioData) {
-                        const base64Data = audioData.split(',')[1];
-                        zip.file(state.audioFile.name, base64Data, { base64: true });
-                    }
-                }
-
-                // Генерируем ZIP
-                const content = await zip.generateAsync({ type: 'blob' });
-                const url = URL.createObjectURL(content);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `Fightify_Backup_${new Date().toISOString().split('T')[0]}.zip`;
-                a.click();
-                URL.revokeObjectURL(url);
-            } catch (error) {
-                console.error("Export error:", error);
-                alert("Ошибка при экспорте данных!");
-            }
-        };
-
-        // Импорт данных из ZIP
-        const importAllData = async (file) => {
-            try {
-                const zip = await JSZip.loadAsync(file);
-                
-                // Ищем аудио и карты
-                const audioFiles = Object.keys(zip.files).filter(name => 
-                    ['.mp3', '.wav', '.ogg'].some(ext => name.endsWith(ext))
-                );
-                
-                const mapFiles = Object.keys(zip.files).filter(name => name.endsWith('.json'));
-                
-                // Загружаем первое найденное аудио
-                if (audioFiles.length > 0) {
-                    const audioFile = audioFiles[0];
-                    const audioData = await zip.file(audioFile).async('base64');
-                    const audioBlob = base64ToBlob(audioData, `audio/${audioFile.split('.').pop()}`);
-                    await handleAudioUpload({ target: { files: [new File([audioBlob], audioFile)] } });
-                }
-                
-                // Загружаем первую найденную карту
-                if (mapFiles.length > 0) {
-                    const mapFile = mapFiles[0];
-                    const mapData = await zip.file(mapFile).async('text');
-                    loadMapFile(new File([mapData], mapFile));
-                }
-                
-                alert("Данные успешно импортированы!");
-            } catch (error) {
-                console.error("Import error:", error);
-                alert("Ошибка при импорте ZIP-архива!");
-            }
-        };
-
-        // Конвертация Base64 в Blob
-        const base64ToBlob = (base64, mimeType) => {
-            const byteString = atob(base64);
-            const ab = new ArrayBuffer(byteString.length);
-            const ia = new Uint8Array(ab);
-            for (let i = 0; i < byteString.length; i++) {
-                ia[i] = byteString.charCodeAt(i);
-            }
-            return new Blob([ab], { type: mimeType });
+            audioUpload: document.getElementById('audio-upload'),
+            loadAudioBtn: document.getElementById('load-audio'),
+            audioInfo: document.getElementById('audio-info'),
+            importBtn: document.getElementById('import-btn'),
+            exportBtn: document.getElementById('export-btn'),
+            fileImport: document.getElementById('file-import')
         };
 
         // Инициализация
-        const init = async () => {
-            await initDB();
+        const init = () => {
             setupEventListeners();
             updateKeyButtons();
         };
@@ -610,6 +358,7 @@
         // Настройка обработчиков событий
         const setupEventListeners = () => {
             // Аудио
+            elements.loadAudioBtn.addEventListener('click', () => elements.audioUpload.click());
             elements.audioUpload.addEventListener('change', handleAudioUpload);
             
             // Плеер
@@ -635,11 +384,10 @@
             // Ноты
             elements.gameArea.addEventListener('click', handleNotePlacement);
             
-            // Сохранение/загрузка
-            elements.saveMapBtn.addEventListener('click', saveCurrentMap);
-            elements.loadMapBtn.addEventListener('change', (e) => loadMapFile(e.target.files[0]));
-            elements.exportAllBtn.addEventListener('click', exportAllData);
-            elements.importAllBtn.addEventListener('change', (e) => importAllData(e.target.files[0]));
+            // Импорт/экспорт
+            elements.importBtn.addEventListener('click', () => elements.fileImport.click());
+            elements.exportBtn.addEventListener('click', exportProject);
+            elements.fileImport.addEventListener('change', importProject);
             
             // Горячие клавиши
             document.addEventListener('keydown', handleKeyPress);
@@ -649,51 +397,38 @@
         };
 
         // Обработка загрузки аудио
-        const handleAudioUpload = async (e) => {
+        const handleAudioUpload = (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
-            try {
-                // Сохраняем аудио в IndexedDB
-                await saveAudioToDB(file);
-                
-                state.audioFile = file;
-                state.audio = new Audio(URL.createObjectURL(file));
-                
-                state.audio.addEventListener('loadedmetadata', () => {
-                    state.duration = state.audio.duration;
-                    elements.audioInfo.textContent = file.name;
-                });
+            state.audioFile = file;
+            state.audio = new Audio(URL.createObjectURL(file));
+            
+            state.audio.addEventListener('loadedmetadata', () => {
+                state.duration = state.audio.duration;
+                elements.audioInfo.textContent = file.name;
+            });
 
-                state.audio.addEventListener('timeupdate', updateAudioState);
-                state.audio.addEventListener('ended', () => {
-                    state.isPlaying = false;
-                    elements.playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
-                });
-                
-                // Если есть ноты - переключаемся в редактор
-                if (state.notes.length > 0) {
-                    state.mode = 'editor';
-                    elements.modeToggle.textContent = 'Редактор';
-                    elements.modeToggle.classList.add('active');
-                    renderAllNotes();
-                }
-            } catch (error) {
-                console.error("Audio upload error:", error);
-                alert("Ошибка при загрузке аудио!");
-            }
+            state.audio.addEventListener('timeupdate', updateAudioState);
+            state.audio.addEventListener('ended', () => {
+                state.isPlaying = false;
+                elements.playBtn.textContent = 'PLAY';
+            });
         };
 
         // Управление воспроизведением
         const togglePlay = () => {
-            if (!state.audio) return;
+            if (!state.audio) {
+                alert("Please load audio first!");
+                return;
+            }
 
             if (state.isPlaying) {
                 state.audio.pause();
-                elements.playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
+                elements.playBtn.textContent = 'PLAY';
             } else {
                 state.audio.play();
-                elements.playBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+                elements.playBtn.textContent = 'PAUSE';
             }
             state.isPlaying = !state.isPlaying;
         };
@@ -734,7 +469,7 @@
         // Переключение режима редактор/тест
         const toggleMode = () => {
             state.mode = state.mode === 'editor' ? 'test' : 'editor';
-            elements.modeToggle.textContent = state.mode === 'editor' ? '<i class="fas fa-edit"></i> Редактор' : '<i class="fas fa-gamepad"></i> Тест';
+            elements.modeToggle.textContent = state.mode === 'editor' ? 'EDITOR' : 'TEST';
             elements.modeToggle.classList.toggle('active', state.mode === 'editor');
             clearRenderedNotes();
             
@@ -791,7 +526,21 @@
             
             const noteElement = document.createElement('div');
             noteElement.className = `note ${note.key}`;
-            noteElement.textContent = note.key === 'RMB' ? '<i class="fas fa-mouse-pointer"></i>' : note.key;
+            
+            // Улучшенное отображение клавиш
+            if (note.key === 'RMB') {
+                noteElement.innerHTML = '<i class="fas fa-mouse-pointer"></i>';
+                // Добавляем FontAwesome динамически
+                if (!document.querySelector('link[href*="font-awesome"]')) {
+                    const fa = document.createElement('link');
+                    fa.rel = 'stylesheet';
+                    fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+                    document.head.appendChild(fa);
+                }
+            } else {
+                noteElement.textContent = note.key;
+            }
+            
             noteElement.style.left = `${note.x}%`;
             noteElement.style.top = `${note.y}%`;
             noteElement.dataset.time = note.time;
@@ -809,6 +558,16 @@
             setTimeout(() => {
                 noteElement.classList.add('visible');
             }, 10);
+        };
+
+        // Рендер всех нот
+        const renderAllNotes = () => {
+            clearRenderedNotes();
+            state.notes.forEach(note => {
+                if (!note.deleted) {
+                    renderNote(note);
+                }
+            });
         };
 
         // Рендер нот в тестовом режиме
@@ -923,6 +682,102 @@
         const clearRenderedNotes = () => {
             elements.gameArea.innerHTML = '';
             state.renderedNotes.clear();
+        };
+
+        // Экспорт проекта в ZIP
+        const exportProject = async () => {
+            if (!state.audioFile) {
+                alert("Please load audio first!");
+                return;
+            }
+
+            try {
+                const zip = new JSZip();
+                
+                // Добавляем данные карты
+                const mapData = {
+                    audioFileName: state.audioFile.name,
+                    notes: state.notes.filter(note => !note.deleted),
+                    duration: state.noteDuration
+                };
+                
+                zip.file("map.json", JSON.stringify(mapData, null, 2));
+                
+                // Добавляем аудио файл
+                const audioResponse = await fetch(URL.createObjectURL(state.audioFile));
+                const audioBlob = await audioResponse.blob();
+                zip.file(state.audioFile.name, audioBlob);
+                
+                // Генерируем ZIP
+                const content = await zip.generateAsync({ type: 'blob' });
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `fightify_project_${Date.now()}.zip`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                console.error("Export error:", error);
+                alert("Error exporting project!");
+            }
+        };
+
+        // Импорт проекта из ZIP
+        const importProject = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                const zip = await JSZip.loadAsync(file);
+                
+                // Ищем файлы
+                const mapFile = zip.file(/map\.json$/i)[0];
+                const audioFile = zip.file(/\.(mp3|wav|ogg)$/i)[0];
+                
+                if (!mapFile) {
+                    throw new Error("Map data not found in ZIP");
+                }
+                
+                // Загружаем данные карты
+                const mapData = JSON.parse(await mapFile.async('text'));
+                
+                // Очищаем текущие данные
+                state.notes = [];
+                clearRenderedNotes();
+                
+                // Устанавливаем новые данные
+                state.notes = mapData.notes || [];
+                state.noteDuration = mapData.duration || 1.75;
+                elements.durationSlider.value = state.noteDuration;
+                elements.durationValue.textContent = `${state.noteDuration}s`;
+                
+                // Загружаем аудио если есть
+                if (audioFile) {
+                    const audioBlob = await audioFile.async('blob');
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audioFileObj = new File([audioBlob], audioFile.name);
+                    
+                    // Создаем временный input для обработки аудио
+                    const tempInput = document.createElement('input');
+                    tempInput.type = 'file';
+                    tempInput.files = [audioFileObj];
+                    
+                    await handleAudioUpload({ target: tempInput });
+                }
+                
+                // Рендерим ноты
+                renderAllNotes();
+                
+                alert("Project imported successfully!");
+                
+            } catch (error) {
+                console.error("Import error:", error);
+                alert("Error importing project!");
+            }
+            
+            // Сбрасываем input чтобы можно было загрузить тот же файл снова
+            e.target.value = '';
         };
 
         // Запуск редактора
