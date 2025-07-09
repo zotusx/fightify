@@ -4,22 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fightify Editor</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root {
-            --bg1: #5e4d53;
-            --bg2: #3b2f36;
-            --accent: #a61241;
-            --text-light: #eee;
-            --panel-bg: #4a3942;
+            --main-color: #6e45e2;
+            --secondary-color: #88d3ce;
+            --dark-bg: #1a1a2e;
+            --light-bg: #16213e;
+            --text-color: #ffffff;
         }
-
+        
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 0;
-            background: var(--bg1);
-            color: var(--text-light);
+            background: var(--dark-bg);
+            color: var(--text-color);
             overflow: hidden;
         }
         
@@ -27,24 +26,26 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            padding: 10px;
+            padding: 20px;
             box-sizing: border-box;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, var(--light-bg) 100%);
         }
         
         #toolbar {
             display: flex;
-            gap: 10px;
-            padding: 10px;
-            background: var(--bg2);
-            border-radius: 5px;
-            margin-bottom: 10px;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-bottom: 15px;
             align-items: center;
-            flex-wrap: wrap;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         button, select {
-            padding: 8px 12px;
-            background: var(--accent);
+            padding: 10px 15px;
+            background: var(--main-color);
             color: white;
             border: none;
             border-radius: 5px;
@@ -54,7 +55,7 @@
         }
         
         button:hover {
-            background: #9e103a;
+            background: var(--secondary-color);
             transform: translateY(-2px);
         }
         
@@ -62,9 +63,9 @@
             display: none;
         }
         
-        .file-upload-btn {
-            padding: 8px 12px;
-            background: var(--accent);
+        .custom-file-upload {
+            padding: 10px 15px;
+            background: var(--main-color);
             color: white;
             border-radius: 5px;
             cursor: pointer;
@@ -72,45 +73,43 @@
             transition: all 0.2s;
         }
         
-        .file-upload-btn:hover {
-            background: #9e103a;
+        .custom-file-upload:hover {
+            background: var(--secondary-color);
         }
         
         #audio-info {
             margin-left: auto;
-            color: var(--text-light);
+            color: var(--text-color);
             opacity: 0.8;
-            max-width: 200px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
         
         #game-area-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: var(--panel-bg);
-            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
             overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         #game-area {
             position: relative;
             width: 100%;
             height: 80vh;
+            background: rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
         
         #timeline-container {
             padding: 10px;
-            background: var(--bg2);
+            background: rgba(0, 0, 0, 0.3);
         }
         
         #timeline {
             width: 100%;
             height: 40px;
-            background: #2b2129;
+            background: rgba(0, 0, 0, 0.2);
             position: relative;
             cursor: pointer;
             border-radius: 5px;
@@ -120,7 +119,7 @@
         #progress-bar {
             height: 100%;
             width: 0;
-            background: var(--accent);
+            background: linear-gradient(90deg, var(--main-color) 0%, var(--secondary-color) 100%);
             opacity: 0.7;
         }
         
@@ -194,15 +193,23 @@
         }
         
         .key-btn.active {
-            background: var(--accent);
+            background: var(--main-color);
             transform: scale(1.1);
+        }
+        
+        .mode-btn {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .mode-btn.active {
+            background: var(--secondary-color);
         }
     </style>
 </head>
 <body>
     <div id="editor-container">
         <div id="toolbar">
-            <label for="audio-upload" class="file-upload-btn">Загрузить аудио</label>
+            <label for="audio-upload" class="custom-file-upload">Загрузить аудио</label>
             <input type="file" id="audio-upload" accept="audio/*">
             
             <button id="play-btn">▶️ Play</button>
@@ -216,17 +223,13 @@
                 <div class="key-btn" data-key="RMB">⨀</div>
             </div>
             
-            <button id="mode-toggle">Режим: Редактор</button>
+            <button id="mode-toggle" class="mode-btn active">Редактор</button>
             
             <div id="duration-control">
                 <span>Длит.:</span>
                 <input type="range" id="note-duration" min="0.5" max="3" step="0.25" value="1.75">
                 <span id="duration-value">1.75s</span>
             </div>
-            
-            <button id="export-btn">Экспорт ZIP</button>
-            <label for="import-btn" class="file-upload-btn">Импорт ZIP</label>
-            <input type="file" id="import-btn" accept=".zip">
             
             <div id="audio-info">Аудио не загружено</div>
         </div>
@@ -246,7 +249,6 @@
         // Состояние редактора
         const state = {
             audio: null,
-            audioFile: null,
             isPlaying: false,
             currentTime: 0,
             duration: 0,
@@ -254,7 +256,7 @@
             notes: [],
             selectedKey: 'A',
             noteDuration: 1.75,
-            renderedNotes: new Map()
+            renderedNotes: new Map() // Для отслеживания отображенных нот
         };
 
         // Элементы DOM
@@ -269,29 +271,28 @@
             gameArea: document.getElementById('game-area'),
             durationSlider: document.getElementById('note-duration'),
             durationValue: document.getElementById('duration-value'),
-            keyButtons: document.querySelectorAll('.key-btn'),
-            exportBtn: document.getElementById('export-btn'),
-            importBtn: document.getElementById('import-btn')
+            keyButtons: document.querySelectorAll('.key-btn')
         };
 
         // Инициализация
-        const init = () => {
+        init();
+
+        function init() {
             setupEventListeners();
             updateKeyButtons();
-        };
+        }
 
-        // Настройка обработчиков событий
-        const setupEventListeners = () => {
-            // Аудио
+        function setupEventListeners() {
+            // Загрузка аудио
             elements.audioUpload.addEventListener('change', handleAudioUpload);
             
-            // Плеер
+            // Управление плеером
             elements.playBtn.addEventListener('click', togglePlay);
             
-            // Таймлайн
+            // Перемотка
             elements.timeline.addEventListener('click', handleTimelineClick);
             
-            // Клавиши
+            // Выбор клавиши
             elements.keyButtons.forEach(btn => {
                 btn.addEventListener('click', () => {
                     state.selectedKey = btn.dataset.key;
@@ -299,34 +300,27 @@
                 });
             });
             
-            // Режим
+            // Переключение режима
             elements.modeToggle.addEventListener('click', toggleMode);
             
-            // Длительность
+            // Настройка длительности
             elements.durationSlider.addEventListener('input', updateDuration);
             
-            // Ноты
+            // Размещение нот
             elements.gameArea.addEventListener('click', handleNotePlacement);
-            
-            // Экспорт/импорт
-            elements.exportBtn.addEventListener('click', exportProject);
-            elements.importBtn.addEventListener('change', importProject);
             
             // Горячие клавиши
             document.addEventListener('keydown', handleKeyPress);
             
             // Обновление нот в редакторе
             setInterval(updateEditorNotes, 100);
-        };
+        }
 
-        // Обработка загрузки аудио
-        const handleAudioUpload = (e) => {
+        function handleAudioUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
 
-            state.audioFile = file;
             state.audio = new Audio(URL.createObjectURL(file));
-            
             state.audio.addEventListener('loadedmetadata', () => {
                 state.duration = state.audio.duration;
                 elements.audioInfo.textContent = file.name;
@@ -337,80 +331,51 @@
                 state.isPlaying = false;
                 elements.playBtn.textContent = '▶️ Play';
             });
-        };
+        }
 
-        // Управление воспроизведением
-        const togglePlay = () => {
-            if (!state.audio) {
-                alert("Сначала загрузите аудио!");
-                return;
-            }
+        function togglePlay() {
+            if (!state.audio) return;
 
             if (state.isPlaying) {
                 state.audio.pause();
-                elements.playBtn.textContent = '▶️ Play';
             } else {
                 state.audio.play();
-                elements.playBtn.textContent = '⏸️ Pause';
             }
             state.isPlaying = !state.isPlaying;
-        };
+            elements.playBtn.textContent = state.isPlaying ? '⏸️ Pause' : '▶️ Play';
+        }
 
-        // Перемотка по клику на таймлайн
-        const handleTimelineClick = (e) => {
+        function handleTimelineClick(e) {
             if (!state.audio) return;
             const rect = elements.timeline.getBoundingClientRect();
             const pos = (e.clientX - rect.left) / rect.width;
             state.audio.currentTime = pos * state.duration;
-            updateProgressBar();
-        };
+        }
 
-        // Обновление прогресс-бара
-        const updateProgressBar = () => {
-            if (!state.audio) return;
-            
-            state.currentTime = state.audio.currentTime;
-            const progress = (state.currentTime / state.duration) * 100;
-            elements.progressBar.style.width = `${progress}%`;
-            
-            const minutes = Math.floor(state.currentTime / 60);
-            const seconds = Math.floor(state.currentTime % 60).toString().padStart(2, '0');
-            elements.currentTime.textContent = `${minutes}:${seconds}`;
-            
-            if (state.mode === 'test') {
-                renderTestNotes();
-            }
-        };
-
-        // Обновление кнопок выбора клавиш
-        const updateKeyButtons = () => {
+        function updateKeyButtons() {
             elements.keyButtons.forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.key === state.selectedKey);
             });
-        };
+        }
 
-        // Переключение режима редактор/тест
-        const toggleMode = () => {
+        function toggleMode() {
             state.mode = state.mode === 'editor' ? 'test' : 'editor';
-            elements.modeToggle.textContent = `Режим: ${state.mode === 'editor' ? 'Редактор' : 'Тест'}`;
+            elements.modeToggle.textContent = state.mode === 'editor' ? 'Редактор' : 'Тест';
+            elements.modeToggle.classList.toggle('active', state.mode === 'editor');
             clearRenderedNotes();
             
             if (state.mode === 'test' && state.audio) {
                 state.audio.currentTime = 0;
                 if (state.isPlaying) state.audio.play();
-            } else {
-                renderAllNotes();
             }
-        };
+        }
 
-        // Обновление длительности отображения нот
-        const updateDuration = (e) => {
+        function updateDuration(e) {
             state.noteDuration = parseFloat(e.target.value);
-            elements.durationValue.textContent = `${state.noteDuration}s`;
-        };
+            elements.durationValue.textContent = `${e.target.value}s`;
+        }
 
-        // Размещение нот в редакторе
-        const handleNotePlacement = (e) => {
+        function handleNotePlacement(e) {
             if (state.mode !== 'editor' || !state.audio) return;
 
             const rect = elements.gameArea.getBoundingClientRect();
@@ -428,14 +393,33 @@
 
             state.notes.push(note);
             renderNote(note);
-        };
+        }
 
-        // Рендер одной ноты
-        const renderNote = (note) => {
+        function updateAudioState() {
+            if (!state.audio) return;
+            
+            state.currentTime = state.audio.currentTime;
+            updateProgressBar();
+            
+            if (state.mode === 'test') {
+                renderTestNotes();
+            }
+        }
+
+        function updateProgressBar() {
+            const progress = (state.currentTime / state.duration) * 100;
+            elements.progressBar.style.width = `${progress}%`;
+            
+            const minutes = Math.floor(state.currentTime / 60);
+            const seconds = Math.floor(state.currentTime % 60).toString().padStart(2, '0');
+            elements.currentTime.textContent = `${minutes}:${seconds}`;
+        }
+
+        function renderNote(note) {
             if (note.deleted) return;
             
             const noteElement = document.createElement('div');
-            noteElement.className = `note ${note.key}`;
+            noteElement.className = `note ${note.key} visible`;
             noteElement.textContent = note.key === 'RMB' ? '⨀' : note.key;
             noteElement.style.left = `${note.x}%`;
             noteElement.style.top = `${note.y}%`;
@@ -449,25 +433,9 @@
             elements.gameArea.appendChild(noteElement);
             note.element = noteElement;
             state.renderedNotes.set(`${note.time}-${note.key}`, noteElement);
-            
-            // Плавное появление
-            setTimeout(() => {
-                noteElement.classList.add('visible');
-            }, 10);
-        };
+        }
 
-        // Рендер всех нот
-        const renderAllNotes = () => {
-            clearRenderedNotes();
-            state.notes.forEach(note => {
-                if (!note.deleted) {
-                    renderNote(note);
-                }
-            });
-        };
-
-        // Рендер нот в тестовом режиме
-        const renderTestNotes = () => {
+        function renderTestNotes() {
             const currentTime = state.currentTime;
             const halfDuration = state.noteDuration / 2;
 
@@ -487,20 +455,37 @@
                     removeNoteElement(note);
                 }
             });
-        };
+        }
 
-        // Обработка клика по ноте
-        const handleNoteClick = (e) => {
+        function updateEditorNotes() {
+            if (state.mode !== 'editor' || !state.audio) return;
+            
+            state.notes.forEach(note => {
+                if (note.deleted) return;
+                
+                const timeDiff = Math.abs(note.time - state.currentTime);
+                const shouldBeVisible = timeDiff <= 0.1;
+                
+                if (note.element) {
+                    if (shouldBeVisible && !note.element.classList.contains('visible')) {
+                        note.element.classList.add('visible');
+                    } else if (!shouldBeVisible && note.element.classList.contains('visible')) {
+                        note.element.classList.remove('visible');
+                    }
+                }
+            });
+        }
+
+        function handleNoteClick(e) {
             const noteElement = e.target;
             const noteTime = parseFloat(noteElement.dataset.time);
             const noteKey = noteElement.dataset.key;
             
             markNoteAsDeleted(noteTime, noteKey);
             animateNoteRemoval(noteElement);
-        };
+        }
 
-        // Обработка нажатия клавиш
-        const handleKeyPress = (e) => {
+        function handleKeyPress(e) {
             if (state.mode !== 'test') return;
             
             const keyMap = {
@@ -521,10 +506,9 @@
             });
             
             notesToRemove.forEach(id => state.renderedNotes.delete(id));
-        };
+        }
 
-        // Пометить ноту как удаленную
-        const markNoteAsDeleted = (time, key) => {
+        function markNoteAsDeleted(time, key) {
             const noteIndex = state.notes.findIndex(n => 
                 Math.abs(n.time - time) < 0.01 && 
                 n.key === key && 
@@ -534,128 +518,32 @@
             if (noteIndex !== -1) {
                 state.notes[noteIndex].deleted = true;
             }
-        };
+        }
 
-        // Анимация удаления ноты
-        const animateNoteRemoval = (element) => {
+        function animateNoteRemoval(element) {
             element.classList.add('fade-out');
             setTimeout(() => {
                 element.remove();
             }, 300);
-        };
+        }
 
-        // Удаление элемента ноты
-        const removeNoteElement = (note) => {
+        function removeNoteElement(note) {
             if (note.element) {
                 note.element.remove();
                 state.renderedNotes.delete(`${note.time}-${note.key}`);
             }
-        };
+        }
 
-        // Очистка игровой области
-        const clearRenderedNotes = () => {
-            elements.gameArea.innerHTML = '';
+        function clearRenderedNotes() {
+            state.renderedNotes.forEach(element => element.remove());
             state.renderedNotes.clear();
-        };
+        }
 
-        // Экспорт проекта в ZIP
-        const exportProject = async () => {
-            if (!state.audioFile) {
-                alert("Сначала загрузите аудио!");
-                return;
-            }
-
-            try {
-                const zip = new JSZip();
-                
-                // Добавляем данные карты
-                const mapData = {
-                    audioFileName: state.audioFile.name,
-                    notes: state.notes.filter(note => !note.deleted),
-                    duration: state.noteDuration
-                };
-                
-                zip.file("map.json", JSON.stringify(mapData, null, 2));
-                
-                // Добавляем аудио файл
-                const audioResponse = await fetch(URL.createObjectURL(state.audioFile));
-                const audioBlob = await audioResponse.blob();
-                zip.file(state.audioFile.name, audioBlob);
-                
-                // Генерируем ZIP
-                const content = await zip.generateAsync({ type: 'blob' });
-                const url = URL.createObjectURL(content);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `fightify_project_${Date.now()}.zip`;
-                a.click();
-                URL.revokeObjectURL(url);
-                
-            } catch (error) {
-                console.error("Export error:", error);
-                alert("Ошибка экспорта!");
-            }
-        };
-
-        // Импорт проекта из ZIP
-        const importProject = async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            try {
-                const zip = await JSZip.loadAsync(file);
-                
-                // Ищем файлы
-                const mapFile = zip.file(/map\.json$/i)[0];
-                const audioFile = zip.file(/\.(mp3|wav|ogg)$/i)[0];
-                
-                if (!mapFile) {
-                    throw new Error("Файл карты не найден");
-                }
-                
-                // Загружаем данные карты
-                const mapData = JSON.parse(await mapFile.async('text'));
-                
-                // Очищаем текущие данные
-                state.notes = [];
-                clearRenderedNotes();
-                
-                // Устанавливаем новые данные
-                state.notes = mapData.notes || [];
-                state.noteDuration = mapData.duration || 1.75;
-                elements.durationSlider.value = state.noteDuration;
-                elements.durationValue.textContent = `${state.noteDuration}s`;
-                
-                // Загружаем аудио если есть
-                if (audioFile) {
-                    const audioBlob = await audioFile.async('blob');
-                    const audioUrl = URL.createObjectURL(audioBlob);
-                    const audioFileObj = new File([audioBlob], audioFile.name);
-                    
-                    // Создаем временный input для обработки аудио
-                    const tempInput = document.createElement('input');
-                    tempInput.type = 'file';
-                    tempInput.files = [audioFileObj];
-                    
-                    await handleAudioUpload({ target: tempInput });
-                }
-                
-                // Рендерим ноты
-                renderAllNotes();
-                
-                alert("Проект успешно импортирован!");
-                
-            } catch (error) {
-                console.error("Import error:", error);
-                alert("Ошибка импорта!");
-            }
-            
-            // Сбрасываем input чтобы можно было загрузить тот же файл снова
-            e.target.value = '';
-        };
-
-        // Запуск редактора
-        init();
+        function updateKeyButtons() {
+            elements.keyButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.key === state.selectedKey);
+            });
+        }
     </script>
 </body>
 </html>
