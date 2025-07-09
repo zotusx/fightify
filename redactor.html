@@ -246,9 +246,10 @@
     </div>
 
     <script>
-        // Состояние редактора
+        // Состояние редактора // Состояние редактора
         const state = {
             audio: null,
+            audioFile: null,
             isPlaying: false,
             currentTime: 0,
             duration: 0,
@@ -256,10 +257,10 @@
             notes: [],
             selectedKey: 'A',
             noteDuration: 1.75,
-            renderedNotes: new Map() // Для отслеживания отображенных нот
+            renderedNotes: new Map()
         };
 
-        // Элементы DOM
+        // Элементы DOM // Элементы DOM
         const elements = {
             audioUpload: document.getElementById('audio-upload'),
             playBtn: document.getElementById('play-btn'),
@@ -271,28 +272,193 @@
             gameArea: document.getElementById('game-area'),
             durationSlider: document.getElementById('note-duration'),
             durationValue: document.getElementById('duration-value'),
-            keyButtons: document.querySelectorAll('.key-btn')
+            keyButtons: document.querySelectorAll('.key-btn'),
+            saveMapBtn: document.getElementById('save-map-btn'),
+            loadMapBtn: document.getElementById('load-map-btn'),
+            exportAllBtn: document.getElementById('export-all-btn'),
+            importAllBtn: document.getElementById('import-all-btn')
+        };
+
+        // Инициализация // Инициализация IndexedDB
+        let db;
+        const initDB = () => {
+            return new Promise((resolve) => {
+                const request = indexedDB.open('FightifyDB', 1);
+                
+                request.onupgradeneeded = (e) => {
+                    db = e.target.result;
+                    if (!db.objectStoreNames.contains('maps')) {
+                        db.createObjectStore('maps', { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains('audio')) {
+                        db.createObjectStore('audio', { keyPath: 'name' });
+                    }
+                };
+
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve();
+                };
+
+                request.onerror = (e) => {
+                    console.error('IndexedDB error:', e.target.error);
+                    resolve(); // Продолжаем работу без DB
+                };
+            });
+        };
+
+        // Сохранить данные в IndexedDB
+        const saveToDB = (storeName, data) => {
+            return new Promise((resolve) => {
+                if (!db) return resolve(false);
+                
+                const transaction = db.transaction(storeName, 'readwrite');
+                const store = transaction.objectStore(storeName);
+                store.put(data);
+                resolve(true);
+            });
+        };
+
+        // Загрузить данные из IndexedDB
+        const loadFromDB = (storeName, key) => {
+            return new Promise((resolve) => {
+                if (!db) return resolve(null);
+                
+                const transaction = db.transaction(storeName, 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.get(key);
+                
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => resolve(null);
+            });
+        };
+
+        // Сохранить аудио в IndexedDB
+        const saveAudioToDB = async (file) => {
+            const reader = new FileReader();
+            return new Promise((resolve) => {
+                reader.onload = async (e) => {
+                    await saveToDB('audio', { name: file.name, data: e.target.result });
+                    resolve();
+                };
+                reader.readAsDataURL(file);
+            });
+        };
+
+        // Загрузить аудио из IndexedDB
+        const loadAudioFromDB = async (name) => {
+            const result = await loadFromDB('audio', name);
+            return result?.data;
+        };
+
+        // Сохранить карту в IndexedDB
+        const saveMapToDB = async (mapData) => {
+            await saveToDB('maps', {
+                id: Date.now(),
+                ...mapData
+            });
+        };
+
+        // Загрузить все карты из IndexedDB
+        const loadAllMapsFromDB = async () => {
+            if (!db) return [];
+            
+            return new Promise((resolve) => {
+                const transaction = db.transaction('maps', 'readonly');
+                const store = transaction.objectStore('maps');
+                const request = store.getAll();
+                
+                request.onsuccess = () => resolve(request.result || []);
+                request.onerror = () => resolve([]);
+            });
+        };
+
+        // Экспорт всех данных в ZIP
+        const exportAllData = async () => {
+            const zip = new JSZip();
+            
+            // Добавляем все карты
+            const maps = await loadAllMapsFromDB();
+            maps.forEach((map, i) => {
+                zip.file(`map_${i}.json`, JSON.stringify(map, null, 2));
+            });
+
+            // Добавляем аудио (если есть)
+            if (state.audioFile) {
+                const audioData = await loadAudioFromDB(state.audioFile.name);
+                if (audioData) {
+                    const base64Data = audioData.split(',')[1];
+                    zip.file(state.audioFile.name, base64Data, { base64: true });
+                }
+            }
+
+            // Генерируем ZIP
+            const content = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(content);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Fightify_Backup_${new Date().toISOString().split('T')[0]}.zip`;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        // Импорт данных из ZIP
+        const importAllData = async (file) => {
+            const zip = await JSZip.loadAsync(file);
+            
+            // Ищем аудио и карты
+            const audioFiles = Object.keys(zip.files).filter(name => 
+                ['.mp3', '.wav', '.ogg'].some(ext => name.endsWith(ext))
+            );
+            
+            const mapFiles = Object.keys(zip.files).filter(name => name.endsWith('.json'));
+            
+            // Загружаем аудио
+            if (audioFiles.length > 0) {
+                const audioFile = audioFiles[0];
+                const audioData = await zip.file(audioFile).async('base64');
+                const audioBlob = base64ToBlob(audioData, `audio/${audioFile.split('.').pop()}`);
+                await handleAudioUpload({ target: { files: [new File([audioBlob], audioFile)] } });
+            }
+            
+            // Загружаем первую карту
+            if (mapFiles.length > 0) {
+                const mapFile = mapFiles[0];
+                const mapData = await zip.file(mapFile).async('text');
+                await loadMap({ target: { result: mapData } });
+            }
+        };
+
+        // Конвертация Base64 в Blob
+        const base64ToBlob = (base64, mimeType) => {
+            const byteString = atob(base64);
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            return new Blob([ab], { type: mimeType });
         };
 
         // Инициализация
-        init();
-
-        function init() {
+        const init = async () => {
+            await initDB();
             setupEventListeners();
             updateKeyButtons();
-        }
+        };
 
-        function setupEventListeners() {
-            // Загрузка аудио
+        // Настройка обработчиков событий
+        const setupEventListeners = () => {
+            // Аудио
             elements.audioUpload.addEventListener('change', handleAudioUpload);
             
-            // Управление плеером
+            // Плеер
             elements.playBtn.addEventListener('click', togglePlay);
             
-            // Перемотка
+            // Таймлайн
             elements.timeline.addEventListener('click', handleTimelineClick);
             
-            // Выбор клавиши
+            // Клавиши
             elements.keyButtons.forEach(btn => {
                 btn.addEventListener('click', () => {
                     state.selectedKey = btn.dataset.key;
@@ -300,20 +466,32 @@
                 });
             });
             
-            // Переключение режима
+            // Режим
             elements.modeToggle.addEventListener('click', toggleMode);
             
-            // Настройка длительности
+            // Длительность
             elements.durationSlider.addEventListener('input', updateDuration);
             
-            // Размещение нот
+            // Ноты
             elements.gameArea.addEventListener('click', handleNotePlacement);
+            
+            // Сохранение/загрузка
+            elements.saveMapBtn.addEventListener('click', saveCurrentMap);
+            elements.loadMapBtn.addEventListener('change', (e) => loadMapFile(e.target.files[0]));
+            elements.exportAllBtn.addEventListener('click', exportAllData);
+            elements.importAllBtn.addEventListener('change', (e) => importAllData(e.target.files[0]));
             
             // Горячие клавиши
             document.addEventListener('keydown', handleKeyPress);
             
             // Обновление нот в редакторе
             setInterval(updateEditorNotes, 100);
+        };
+        init();
+
+        function init() {
+            setupEventListeners();
+            updateKeyButtons();
         }
 
         function handleAudioUpload(e) {
