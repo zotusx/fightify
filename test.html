@@ -1,295 +1,549 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Редактор нот Fightify</title>
-<style>
-  body {
-    margin: 0; background: #2a2230; color: #eee; font-family: 'Orbitron', monospace, monospace;
-    user-select: none;
-  }
-  #controls {
-    background: #3e3340; padding: 10px; display: flex; align-items: center; gap: 10px;
-    border-bottom: 2px solid #a61241;
-  }
-  button, select, input[type="file"] {
-    font-family: 'Orbitron', monospace; font-weight: 700; background: #5e4d53; color: #eee;
-    border: 2px solid #a61241; border-radius: 4px; padding: 6px 12px;
-    cursor: pointer;
-  }
-  button:hover, select:hover, input[type="file"]:hover {
-    background: #a61241; color: #fff;
-  }
-  #editorArea {
-    position: relative; height: 400px; background: #1f1925; overflow: hidden;
-    margin: 20px; border: 2px solid #a61241; border-radius: 8px;
-  }
-  .note {
-    position: absolute; width: 40px; height: 40px; border-radius: 8px;
-    background: #a61241; color: white; font-weight: 900; font-size: 24px;
-    text-align: center; line-height: 40px; user-select: none;
-    transition: opacity 0.5s ease-out;
-    pointer-events: auto;
-    cursor: pointer;
-  }
-  .note.highlight {
-    background: #ff416c;
-    box-shadow: 0 0 12px #ff416c;
-  }
-  .note.fading {
-    opacity: 0;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fightify Editor</title>
+    <style>
+        :root {
+            --main-color: #6e45e2;
+            --secondary-color: #88d3ce;
+            --dark-bg: #1a1a2e;
+            --light-bg: #16213e;
+            --text-color: #ffffff;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--dark-bg);
+            color: var(--text-color);
+            overflow: hidden;
+        }
+        
+        #editor-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, var(--light-bg) 100%);
+        }
+        
+        #toolbar {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        button, select {
+            padding: 10px 15px;
+            background: var(--main-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .custom-file-upload {
+            padding: 10px 15px;
+            background: var(--main-color);
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        .custom-file-upload:hover {
+            background: var(--secondary-color);
+        }
+        
+        #audio-info {
+            margin-left: auto;
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+        
+        #game-area-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        #game-area {
+            position: relative;
+            width: 100%;
+            height: 80vh;
+            background: rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        #timeline-container {
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        #timeline {
+            width: 100%;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.2);
+            position: relative;
+            cursor: pointer;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        #progress-bar {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, var(--main-color) 0%, var(--secondary-color) 100%);
+            opacity: 0.7;
+        }
+        
+        #current-time {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            font-size: 14px;
+        }
+        
+        .note {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+        
+        .note.visible {
+            opacity: 1;
+        }
+        
+        .note.A { background: #ff5c5c; }
+        .note.S { background: #5cff5c; }
+        .note.D { background: #5c5cff; }
+        .note.F { background: #ffff5c; color: #000; }
+        .note.RMB { background: #ff5cff; }
+        
+        .note.fade-out {
+            opacity: 0;
+            transform: scale(1.5);
+        }
+        
+        #duration-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #duration-value {
+            min-width: 40px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        #key-selector {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .key-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .key-btn.active {
+            background: var(--main-color);
+            transform: scale(1.1);
+        }
+        
+        .mode-btn {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .mode-btn.active {
+            background: var(--secondary-color);
+        }
+    </style>
 </head>
 <body>
+    <div id="editor-container">
+        <div id="toolbar">
+            <label for="audio-upload" class="custom-file-upload">Загрузить аудио</label>
+            <input type="file" id="audio-upload" accept="audio/*">
+            
+            <button id="play-btn">▶️ Play</button>
+            <div id="current-time">0:00</div>
+            
+            <div id="key-selector">
+                <div class="key-btn active" data-key="A">A</div>
+                <div class="key-btn" data-key="S">S</div>
+                <div class="key-btn" data-key="D">D</div>
+                <div class="key-btn" data-key="F">F</div>
+                <div class="key-btn" data-key="RMB">⨀</div>
+            </div>
+            
+            <button id="mode-toggle" class="mode-btn active">Редактор</button>
+            
+            <div id="duration-control">
+                <span>Длит.:</span>
+                <input type="range" id="note-duration" min="0.5" max="3" step="0.25" value="1.75">
+                <span id="duration-value">1.75s</span>
+            </div>
+            
+            <div id="audio-info">Аудио не загружено</div>
+        </div>
+        
+        <div id="game-area-container">
+            <div id="game-area"></div>
+            <div id="timeline-container">
+                <div id="timeline">
+                    <div id="progress-bar"></div>
+                    <div id="current-time">0:00</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<div id="controls">
-  <button id="playPauseBtn">Play</button>
-  <button id="modeBtn">Режим: Редактор</button>
-  <label for="fileInput" style="cursor:pointer;">Выбрать аудио</label>
-  <input type="file" id="fileInput" accept="audio/*" style="display:none;">
-  <select id="keySelector" title="Выбери клавишу для ноты">
-    <option value="A">A</option>
-    <option value="S">S</option>
-    <option value="D">D</option>
-    <option value="F">F</option>
-    <option value="M">ПКМ</option>
-  </select>
-  <input type="range" id="seekSlider" min="0" max="100" value="0" style="flex-grow:1; margin-left:10px;"/>
-</div>
-
-<div id="editorArea" title="Клик в режиме редактора — добавить ноту"></div>
-
-<audio id="audioTrack"></audio>
-
-<script>
-  const editorArea = document.getElementById('editorArea');
-  const audioTrack = document.getElementById('audioTrack');
-  const playPauseBtn = document.getElementById('playPauseBtn');
-  const modeBtn = document.getElementById('modeBtn');
-  const fileInput = document.getElementById('fileInput');
-  const keySelector = document.getElementById('keySelector');
-  const seekSlider = document.getElementById('seekSlider');
-  let mode = 'edit'; // 'edit' или 'test'
-  let notes = [];
-  let noteIdCounter = 0;
-  let currentKey = 'A';
-  const noteWidth = 40, noteHeight = 40;
-
-  // Обновляем max и value с длиной и текущим временем аудио
-  audioTrack.addEventListener('loadedmetadata', () => {
-    seekSlider.max = audioTrack.duration;
-  });
-
-  audioTrack.addEventListener('timeupdate', () => {
-    if (!seekSlider.dragging) { // Чтобы не конфликтовать с перетаскиванием
-      seekSlider.value = audioTrack.currentTime;
-    }
-  });
-
-// Флаг для отслеживания перемотки пользователем
-  seekSlider.dragging = false;
-
-  seekSlider.addEventListener('mousedown', () => {
-    seekSlider.dragging = true;
-  });
-  seekSlider.addEventListener('mouseup', () => {
-    seekSlider.dragging = false;
-    audioTrack.currentTime = seekSlider.value;
-  });
-  seekSlider.addEventListener('input', () => {
-    // Чтобы слайдер плавно перематывался при движении мыши
-      if (seekSlider.dragging) {
-      audioTrack.currentTime = seekSlider.value;
-      renderNotes();
-    }
-  });
-
-
-  // Переключение режима
-  modeBtn.onclick = () => {
-    if (!audioTrack.src) {
-      alert('Загрузите аудио!');
-      return;
-    }
-    if (mode === 'edit') {
-      mode = 'test';
-      modeBtn.textContent = 'Режим: Тест';
-      renderNotes();
-    } else {
-      mode = 'edit';
-      modeBtn.textContent = 'Режим: Редактор';
-      renderNotes();
-    }
-  };
-
-  // Кнопка Play/Pause
-  playPauseBtn.onclick = () => {
-    if (!audioTrack.src) {
-      alert('Загрузите аудио!');
-      return;
-    }
-    if (audioTrack.paused) {
-      audioTrack.play();
-      playPauseBtn.textContent = 'Pause';
-    } else {
-      audioTrack.pause();
-      playPauseBtn.textContent = 'Play';
-    }
-  };
-
-  // При загрузке аудио
-  fileInput.onchange = (e) => {
-    if (e.target.files.length === 0) return;
-    const file = e.target.files[0];
-    const url = URL.createObjectURL(file);
-    audioTrack.src = url;
-    audioTrack.load();
-    notes = [];
-    noteIdCounter = 0;
-    mode = 'edit';
-    modeBtn.textContent = 'Режим: Редактор';
-    playPauseBtn.textContent = 'Play';
-    renderNotes();
-  };
-
-  // Выбор клавиши
-  keySelector.onchange = (e) => {
-    currentKey = e.target.value;
-  };
-
-  // Добавление ноты по клику (только в режиме редактора)
-  editorArea.addEventListener('click', (e) => {
-    if (mode !== 'edit') return;
-    const rect = editorArea.getBoundingClientRect();
-    const x = e.clientX - rect.left - noteWidth / 2;
-    const y = e.clientY - rect.top - noteHeight / 2;
-
-    const time = audioTrack.currentTime;
-    notes.push({
-      id: noteIdCounter++,
-      x: Math.min(Math.max(0, x), editorArea.clientWidth - noteWidth),
-      y: Math.min(Math.max(0, y), editorArea.clientHeight - noteHeight),
-      key: currentKey,
-      time: time,
-      fading: false,
-      highlight: false,
-    });
-    renderNotes();
-  });
-  
-
-
-
-  // Рендер нот
-  function renderNotes() {
-    // Очистка старых нот
-    editorArea.querySelectorAll('.note').forEach(n => n.remove());
-    const currentTime = audioTrack.currentTime;
-
-    notes.forEach(note => {
-      if (note.fading) return;
-
-      // В режиме теста показываем ноты, если их время в пределах 0.5 сек от текущего
-      if (mode === 'test') {
-        if (Math.abs(note.time - currentTime) > 0.5) return;
-      }
-
-      const div = document.createElement('div');
-      div.classList.add('note');
-      div.textContent = note.key === 'M' ? '🖱' : note.key;
-      div.style.left = note.x + 'px';
-      div.style.top = note.y + 'px';
-      div.dataset.id = note.id;
-
-      // В режиме редактора кликабельные, в тесте — нет
-      if (mode === 'edit') {
-        div.style.cursor = 'pointer';
-        div.onclick = (e) => {
-          e.stopPropagation();
-          fadeOutNote(note.id); // Используем анимацию удаления и там, и там
+    <script>
+        // Состояние редактора
+        const state = {
+            audio: null,
+            isPlaying: false,
+            currentTime: 0,
+            duration: 0,
+            mode: 'editor',
+            notes: [],
+            selectedKey: 'A',
+            noteDuration: 1.75,
+            renderedNotes: new Map() // Для отслеживания отображенных нот
         };
-      }
 
+        // Элементы DOM
+        const elements = {
+            audioUpload: document.getElementById('audio-upload'),
+            playBtn: document.getElementById('play-btn'),
+            currentTime: document.getElementById('current-time'),
+            modeToggle: document.getElementById('mode-toggle'),
+            audioInfo: document.getElementById('audio-info'),
+            timeline: document.getElementById('timeline'),
+            progressBar: document.getElementById('progress-bar'),
+            gameArea: document.getElementById('game-area'),
+            durationSlider: document.getElementById('note-duration'),
+            durationValue: document.getElementById('duration-value'),
+            keyButtons: document.querySelectorAll('.key-btn')
+        };
 
-      editorArea.appendChild(div);
-    });
-  }
+        // Инициализация
+        init();
 
-  // Постоянный рендер в тестовом режиме, чтобы ноты появлялись/исчезали по времени
-  function tick() {
-    if (mode === 'test') {
-      renderNotes();
-    }
-    requestAnimationFrame(tick);
-  }
-  tick();
+        function init() {
+            setupEventListeners();
+            updateKeyButtons();
+        }
 
-  // Проверка нажатий клавиш в тестовом режиме
-  window.addEventListener('keydown', (e) => {
-    if (mode !== 'test') return;
+        function setupEventListeners() {
+            // Загрузка аудио
+            elements.audioUpload.addEventListener('change', handleAudioUpload);
+            
+            // Управление плеером
+            elements.playBtn.addEventListener('click', togglePlay);
+            
+            // Перемотка
+            elements.timeline.addEventListener('click', handleTimelineClick);
+            
+            // Выбор клавиши
+            elements.keyButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    state.selectedKey = btn.dataset.key;
+                    updateKeyButtons();
+                });
+            });
+            
+            // Переключение режима
+            elements.modeToggle.addEventListener('click', toggleMode);
+            
+            // Настройка длительности
+            elements.durationSlider.addEventListener('input', updateDuration);
+            
+            // Размещение нот
+            elements.gameArea.addEventListener('click', handleNotePlacement);
+            
+            // Горячие клавиши
+            document.addEventListener('keydown', handleKeyPress);
+            
+            // Обновление нот в редакторе
+            setInterval(updateEditorNotes, 100);
+        }
 
-    let pressedKey = e.key.toUpperCase();
+        function handleAudioUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
 
-    // Для ПКМ - обработка будет отдельно
-    if (!['A', 'S', 'D', 'F'].includes(pressedKey)) return;
+            state.audio = new Audio(URL.createObjectURL(file));
+            state.audio.addEventListener('loadedmetadata', () => {
+                state.duration = state.audio.duration;
+                elements.audioInfo.textContent = file.name;
+            });
 
-    let currentTime = audioTrack.currentTime;
+            state.audio.addEventListener('timeupdate', updateAudioState);
+            state.audio.addEventListener('ended', () => {
+                state.isPlaying = false;
+                elements.playBtn.textContent = '▶️ Play';
+            });
+        }
 
-    // Проверяем ноты в ±0.5 сек с текущим временем и совпадением клавиши
-    for (let i = 0; i < notes.length; i++) {
-      const note = notes[i];
-      if (note.fading) continue;
-      if (note.key !== pressedKey) continue;
-      if (Math.abs(note.time - currentTime) <= 0.5) {
-        fadeOutNote(note.id);
-        break;
-      }
-    }
-  });
+        function togglePlay() {
+            if (!state.audio) return;
 
+            if (state.isPlaying) {
+                state.audio.pause();
+            } else {
+                state.audio.play();
+            }
+            state.isPlaying = !state.isPlaying;
+            elements.playBtn.textContent = state.isPlaying ? '⏸️ Pause' : '▶️ Play';
+        }
 
-  function fadeOutNote(id) {
-    const noteIndex = notes.findIndex(n => n.id === id);
-    if (noteIndex === -1) return;
+        function handleTimelineClick(e) {
+            if (!state.audio) return;
+            const rect = elements.timeline.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            state.audio.currentTime = pos * state.duration;
+        }
 
-    const note = notes[noteIndex];
-    note.fading = true;
+        function updateKeyButtons() {
+            elements.keyButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.key === state.selectedKey);
+            });
+        }
 
-    const el = document.querySelector(`.note[data-id="${id}"]`);
-    if (!el) return;
+        function toggleMode() {
+            state.mode = state.mode === 'editor' ? 'test' : 'editor';
+            elements.modeToggle.textContent = state.mode === 'editor' ? 'Редактор' : 'Тест';
+            elements.modeToggle.classList.toggle('active', state.mode === 'editor');
+            clearRenderedNotes();
+            
+            if (state.mode === 'test' && state.audio) {
+                state.audio.currentTime = 0;
+                if (state.isPlaying) state.audio.play();
+            }
+        }
 
-    el.classList.add('fading');
+        function updateDuration(e) {
+            state.noteDuration = parseFloat(e.target.value);
+            elements.durationValue.textContent = `${e.target.value}s`;
+        }
 
-    // Через 500 мс удаляем из массива и DOM
-    setTimeout(() => {
-      notes.splice(noteIndex, 1);
-      renderNotes();
-    }, 500);
-  }
+        function handleNotePlacement(e) {
+            if (state.mode !== 'editor' || !state.audio) return;
 
+            const rect = elements.gameArea.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
 
+            const note = {
+                x: (x / rect.width) * 100,
+                y: (y / rect.height) * 100,
+                time: state.currentTime,
+                key: state.selectedKey,
+                deleted: false,
+                element: null
+            };
 
-  // Обработка ПКМ (правая кнопка мыши) для нот с key='M' в тестовом режиме
-  editorArea.addEventListener('contextmenu', (e) => {
-    if (mode !== 'test') return;
-    e.preventDefault();
-    const currentTime = audioTrack.currentTime;
-    for (let i = 0; i < notes.length; i++) {
-      const note = notes[i];
-      if (note.fading) continue;
-      if (note.key !== 'M') continue;
-      if (Math.abs(note.time - currentTime) <= 0.5) {
-        fadeOutNote(note.id);
-        break;
-      }
-    }
-  });
+            state.notes.push(note);
+            renderNote(note);
+        }
 
-  // Анимация исчезновения ноты и удаление из массива
+        function updateAudioState() {
+            if (!state.audio) return;
+            
+            state.currentTime = state.audio.currentTime;
+            updateProgressBar();
+            
+            if (state.mode === 'test') {
+                renderTestNotes();
+            }
+        }
 
-</script>
+        function updateProgressBar() {
+            const progress = (state.currentTime / state.duration) * 100;
+            elements.progressBar.style.width = `${progress}%`;
+            
+            const minutes = Math.floor(state.currentTime / 60);
+            const seconds = Math.floor(state.currentTime % 60).toString().padStart(2, '0');
+            elements.currentTime.textContent = `${minutes}:${seconds}`;
+        }
 
+        function renderNote(note) {
+            if (note.deleted) return;
+            
+            const noteElement = document.createElement('div');
+            noteElement.className = `note ${note.key} visible`;
+            noteElement.textContent = note.key === 'RMB' ? '⨀' : note.key;
+            noteElement.style.left = `${note.x}%`;
+            noteElement.style.top = `${note.y}%`;
+            noteElement.dataset.time = note.time;
+            noteElement.dataset.key = note.key;
+            
+            if (state.mode === 'test') {
+                noteElement.addEventListener('click', handleNoteClick);
+            }
+            
+            elements.gameArea.appendChild(noteElement);
+            note.element = noteElement;
+            state.renderedNotes.set(`${note.time}-${note.key}`, noteElement);
+        }
+
+        function renderTestNotes() {
+            const currentTime = state.currentTime;
+            const halfDuration = state.noteDuration / 2;
+
+            state.notes.forEach(note => {
+                if (note.deleted) return;
+                
+                const noteTime = note.time;
+                const startTime = noteTime - halfDuration;
+                const endTime = noteTime + halfDuration;
+
+                const shouldBeVisible = currentTime >= startTime && currentTime <= endTime;
+                const isRendered = state.renderedNotes.has(`${note.time}-${note.key}`);
+                
+                if (shouldBeVisible && !isRendered) {
+                    renderNote(note);
+                } else if (!shouldBeVisible && isRendered) {
+                    removeNoteElement(note);
+                }
+            });
+        }
+
+        function updateEditorNotes() {
+            if (state.mode !== 'editor' || !state.audio) return;
+            
+            state.notes.forEach(note => {
+                if (note.deleted) return;
+                
+                const timeDiff = Math.abs(note.time - state.currentTime);
+                const shouldBeVisible = timeDiff <= 0.1;
+                
+                if (note.element) {
+                    if (shouldBeVisible && !note.element.classList.contains('visible')) {
+                        note.element.classList.add('visible');
+                    } else if (!shouldBeVisible && note.element.classList.contains('visible')) {
+                        note.element.classList.remove('visible');
+                    }
+                }
+            });
+        }
+
+        function handleNoteClick(e) {
+            const noteElement = e.target;
+            const noteTime = parseFloat(noteElement.dataset.time);
+            const noteKey = noteElement.dataset.key;
+            
+            markNoteAsDeleted(noteTime, noteKey);
+            animateNoteRemoval(noteElement);
+        }
+
+        function handleKeyPress(e) {
+            if (state.mode !== 'test') return;
+            
+            const keyMap = {
+                'a': 'A', 's': 'S', 'd': 'D', 'f': 'F'
+            };
+            
+            const key = keyMap[e.key.toLowerCase()];
+            if (!key) return;
+            
+            const notesToRemove = [];
+            state.renderedNotes.forEach((element, id) => {
+                if (element.dataset.key === key) {
+                    const noteTime = parseFloat(element.dataset.time);
+                    markNoteAsDeleted(noteTime, key);
+                    animateNoteRemoval(element);
+                    notesToRemove.push(id);
+                }
+            });
+            
+            notesToRemove.forEach(id => state.renderedNotes.delete(id));
+        }
+
+        function markNoteAsDeleted(time, key) {
+            const noteIndex = state.notes.findIndex(n => 
+                Math.abs(n.time - time) < 0.01 && 
+                n.key === key && 
+                !n.deleted
+            );
+            
+            if (noteIndex !== -1) {
+                state.notes[noteIndex].deleted = true;
+            }
+        }
+
+        function animateNoteRemoval(element) {
+            element.classList.add('fade-out');
+            setTimeout(() => {
+                element.remove();
+            }, 300);
+        }
+
+        function removeNoteElement(note) {
+            if (note.element) {
+                note.element.remove();
+                state.renderedNotes.delete(`${note.time}-${note.key}`);
+            }
+        }
+
+        function clearRenderedNotes() {
+            state.renderedNotes.forEach(element => element.remove());
+            state.renderedNotes.clear();
+        }
+
+        function updateKeyButtons() {
+            elements.keyButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.key === state.selectedKey);
+            });
+        }
+    </script>
 </body>
 </html>
