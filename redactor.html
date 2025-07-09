@@ -204,10 +204,24 @@
         .mode-btn.active {
             background: var(--secondary-color);
         }
+        
+        #score-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            z-index: 100;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div id="editor-container">
+        <div id="score-display">Score: 0</div>
         <div id="toolbar">
             <label for="audio-upload" class="custom-file-upload">Загрузить аудио</label>
             <input type="file" id="audio-upload" accept="audio/*">
@@ -224,10 +238,7 @@
             </div>
             
             <button id="mode-toggle" class="mode-btn active">Редактор</button>
-            <div id="hit-counter" style="position: absolute; top: 10px; left: 10px; color: white; font-size: 18px; z-index: 999;">
-                Hits: 0
-            </div>
-
+            
             <div id="duration-control">
                 <span>Длит.:</span>
                 <input type="range" id="note-duration" min="0.5" max="3" step="0.25" value="1.75">
@@ -259,7 +270,9 @@
             notes: [],
             selectedKey: 'A',
             noteDuration: 1.75,
-            renderedNotes: new Map() // Для отслеживания отображенных нот
+            renderedNotes: new Map(), // Для отслеживания отображенных нот
+            score: 0,
+            totalNotes: 0
         };
 
         // Элементы DOM
@@ -274,13 +287,11 @@
             gameArea: document.getElementById('game-area'),
             durationSlider: document.getElementById('note-duration'),
             durationValue: document.getElementById('duration-value'),
-            keyButtons: document.querySelectorAll('.key-btn')
+            keyButtons: document.querySelectorAll('.key-btn'),
+            scoreDisplay: document.getElementById('score-display')
         };
 
         // Инициализация
-        state.hitCount = 0;
-        const hitCounter = document.getElementById("hit-counter");
-
         init();
 
         function init() {
@@ -369,6 +380,16 @@
             elements.modeToggle.textContent = state.mode === 'editor' ? 'Редактор' : 'Тест';
             elements.modeToggle.classList.toggle('active', state.mode === 'editor');
             clearRenderedNotes();
+            
+            if (state.mode === 'test') {
+                // Сброс счетчика при переходе в тестовый режим
+                state.score = 0;
+                state.totalNotes = state.notes.filter(n => !n.deleted).length;
+                updateScoreDisplay();
+                elements.scoreDisplay.style.display = 'block';
+            } else {
+                elements.scoreDisplay.style.display = 'none';
+            }
             
             if (state.mode === 'test' && state.audio) {
                 state.audio.currentTime = 0;
@@ -489,6 +510,10 @@
             
             markNoteAsDeleted(noteTime, noteKey);
             animateNoteRemoval(noteElement);
+            
+            // Увеличиваем счетчик
+            state.score++;
+            updateScoreDisplay();
         }
 
         function handleKeyPress(e) {
@@ -508,6 +533,10 @@
                     markNoteAsDeleted(noteTime, key);
                     animateNoteRemoval(element);
                     notesToRemove.push(id);
+                    
+                    // Увеличиваем счетчик
+                    state.score++;
+                    updateScoreDisplay();
                 }
             });
             
@@ -545,10 +574,8 @@
             state.renderedNotes.clear();
         }
 
-        function updateKeyButtons() {
-            elements.keyButtons.forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.key === state.selectedKey);
-            });
+        function updateScoreDisplay() {
+            elements.scoreDisplay.textContent = `Score: ${state.score} / ${state.totalNotes}`;
         }
     </script>
 </body>
