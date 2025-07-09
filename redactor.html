@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fightify Editor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root {
             --main-color: #6e45e2;
@@ -26,61 +28,88 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            padding: 20px;
+            padding: 15px;
             box-sizing: border-box;
             background: linear-gradient(135deg, var(--dark-bg) 0%, var(--light-bg) 100%);
         }
         
         #toolbar {
             display: flex;
-            gap: 15px;
-            padding: 15px;
+            gap: 10px;
+            padding: 12px;
             background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
+            border-radius: 12px;
             margin-bottom: 15px;
             align-items: center;
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            flex-wrap: wrap;
         }
         
-        button, select {
+        .toolbar-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 5px 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+        }
+        
+        button {
             padding: 10px 15px;
             background: var(--main-color);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
         }
         
         button:hover {
             background: var(--secondary-color);
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:active {
+            transform: translateY(0);
         }
         
         input[type="file"] {
             display: none;
         }
         
-        .custom-file-upload {
+        .file-upload-btn {
             padding: 10px 15px;
             background: var(--main-color);
             color: white;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
-        .custom-file-upload:hover {
+        .file-upload-btn:hover {
             background: var(--secondary-color);
         }
         
         #audio-info {
             margin-left: auto;
             color: var(--text-color);
-            opacity: 0.8;
+            opacity: 0.9;
+            font-size: 14px;
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         #game-area-container {
@@ -88,7 +117,7 @@
             display: flex;
             flex-direction: column;
             background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
@@ -96,7 +125,7 @@
         #game-area {
             position: relative;
             width: 100%;
-            height: 80vh;
+            height: 75vh;
             background: rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
@@ -112,7 +141,7 @@
             background: rgba(0, 0, 0, 0.2);
             position: relative;
             cursor: pointer;
-            border-radius: 5px;
+            border-radius: 8px;
             overflow: hidden;
         }
         
@@ -129,6 +158,7 @@
             left: 10px;
             transform: translateY(-50%);
             font-size: 14px;
+            font-weight: bold;
         }
         
         .note {
@@ -144,8 +174,9 @@
             user-select: none;
             opacity: 0;
             transition: opacity 0.3s, transform 0.3s;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
             z-index: 10;
+            font-size: 18px;
         }
         
         .note.visible {
@@ -166,18 +197,25 @@
         #duration-control {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
         }
         
         #duration-value {
             min-width: 40px;
             text-align: center;
             font-weight: bold;
+            font-size: 14px;
         }
         
         #key-selector {
             display: flex;
             gap: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            border-radius: 8px;
         }
         
         .key-btn {
@@ -187,14 +225,20 @@
             align-items: center;
             justify-content: center;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
+            font-weight: bold;
         }
         
         .key-btn.active {
             background: var(--main-color);
             transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .key-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
         
         .mode-btn {
@@ -209,29 +253,63 @@
 <body>
     <div id="editor-container">
         <div id="toolbar">
-            <label for="audio-upload" class="custom-file-upload">Загрузить аудио</label>
-            <input type="file" id="audio-upload" accept="audio/*">
-            
-            <button id="play-btn">▶️ Play</button>
-            <div id="current-time">0:00</div>
-            
-            <div id="key-selector">
-                <div class="key-btn active" data-key="A">A</div>
-                <div class="key-btn" data-key="S">S</div>
-                <div class="key-btn" data-key="D">D</div>
-                <div class="key-btn" data-key="F">F</div>
-                <div class="key-btn" data-key="RMB">⨀</div>
+            <div class="toolbar-section">
+                <label for="audio-upload" class="file-upload-btn">
+                    <i class="fas fa-music"></i> Аудио
+                </label>
+                <input type="file" id="audio-upload" accept="audio/*">
+                
+                <button id="play-btn">
+                    <i class="fas fa-play"></i> Play
+                </button>
+                <div id="current-time">0:00</div>
             </div>
             
-            <button id="mode-toggle" class="mode-btn active">Редактор</button>
-            
-            <div id="duration-control">
-                <span>Длит.:</span>
-                <input type="range" id="note-duration" min="0.5" max="3" step="0.25" value="1.75">
-                <span id="duration-value">1.75s</span>
+            <div class="toolbar-section">
+                <div id="key-selector">
+                    <div class="key-btn active" data-key="A">A</div>
+                    <div class="key-btn" data-key="S">S</div>
+                    <div class="key-btn" data-key="D">D</div>
+                    <div class="key-btn" data-key="F">F</div>
+                    <div class="key-btn" data-key="RMB"><i class="fas fa-mouse-pointer"></i></div>
+                </div>
             </div>
             
-            <div id="audio-info">Аудио не загружено</div>
+            <div class="toolbar-section">
+                <button id="mode-toggle" class="mode-btn active">
+                    <i class="fas fa-edit"></i> Редактор
+                </button>
+                
+                <div id="duration-control">
+                    <span><i class="fas fa-clock"></i></span>
+                    <input type="range" id="note-duration" min="0.5" max="3" step="0.25" value="1.75">
+                    <span id="duration-value">1.75s</span>
+                </div>
+            </div>
+            
+            <div class="toolbar-section">
+                <button id="save-map-btn">
+                    <i class="fas fa-save"></i> Сохранить
+                </button>
+                
+                <label for="load-map-btn" class="file-upload-btn">
+                    <i class="fas fa-folder-open"></i> Загрузить
+                </label>
+                <input type="file" id="load-map-btn" accept=".json">
+                
+                <button id="export-all-btn">
+                    <i class="fas fa-file-export"></i> Экспорт
+                </button>
+                
+                <label for="import-all-btn" class="file-upload-btn">
+                    <i class="fas fa-file-import"></i> Импорт
+                </label>
+                <input type="file" id="import-all-btn" accept=".zip">
+            </div>
+            
+            <div id="audio-info">
+                <i class="fas fa-info-circle"></i> Аудио не загружено
+            </div>
         </div>
         
         <div id="game-area-container">
@@ -246,7 +324,7 @@
     </div>
 
     <script>
-        // Состояние редактора // Состояние редактора
+        // Состояние редактора
         const state = {
             audio: null,
             audioFile: null,
@@ -260,7 +338,7 @@
             renderedNotes: new Map()
         };
 
-        // Элементы DOM // Элементы DOM
+        // Элементы DOM
         const elements = {
             audioUpload: document.getElementById('audio-upload'),
             playBtn: document.getElementById('play-btn'),
@@ -279,7 +357,7 @@
             importAllBtn: document.getElementById('import-all-btn')
         };
 
-        // Инициализация // Инициализация IndexedDB
+        // Инициализация IndexedDB
         let db;
         const initDB = () => {
             return new Promise((resolve) => {
@@ -302,7 +380,7 @@
 
                 request.onerror = (e) => {
                     console.error('IndexedDB error:', e.target.error);
-                    resolve(); // Продолжаем работу без DB
+                    resolve();
                 };
             });
         };
@@ -314,8 +392,10 @@
                 
                 const transaction = db.transaction(storeName, 'readwrite');
                 const store = transaction.objectStore(storeName);
-                store.put(data);
-                resolve(true);
+                const request = store.put(data);
+                
+                request.onsuccess = () => resolve(true);
+                request.onerror = () => resolve(false);
             });
         };
 
@@ -351,81 +431,161 @@
             return result?.data;
         };
 
-        // Сохранить карту в IndexedDB
-        const saveMapToDB = async (mapData) => {
+        // Сохранить текущую карту
+        const saveCurrentMap = async () => {
+            if (!state.audioFile || state.notes.length === 0) {
+                alert("Сначала загрузи аудио и добавь ноты!");
+                return;
+            }
+
+            const mapData = {
+                audioFileName: state.audioFile.name,
+                notes: state.notes.filter(note => !note.deleted),
+                duration: state.noteDuration
+            };
+
+            // Сохраняем в IndexedDB
             await saveToDB('maps', {
                 id: Date.now(),
                 ...mapData
             });
+
+            // Создаем JSON для скачивания
+            const json = JSON.stringify(mapData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `FightifyMap_${state.audioFile.name.split('.')[0]}_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            alert("Карта сохранена!");
         };
 
-        // Загрузить все карты из IndexedDB
-        const loadAllMapsFromDB = async () => {
-            if (!db) return [];
-            
-            return new Promise((resolve) => {
-                const transaction = db.transaction('maps', 'readonly');
-                const store = transaction.objectStore('maps');
-                const request = store.getAll();
-                
-                request.onsuccess = () => resolve(request.result || []);
-                request.onerror = () => resolve([]);
+        // Загрузить карту из файла
+        const loadMapFile = (file) => {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const mapData = JSON.parse(e.target.result);
+                    
+                    // Очищаем текущие данные
+                    state.notes = [];
+                    clearRenderedNotes();
+                    
+                    // Загружаем новые
+                    state.notes = mapData.notes || [];
+                    state.noteDuration = mapData.duration || 1.75;
+                    elements.durationSlider.value = state.noteDuration;
+                    elements.durationValue.textContent = `${state.noteDuration}s`;
+                    
+                    // Проверяем аудио
+                    if (state.audioFile && state.audioFile.name === mapData.audioFileName) {
+                        console.log("Аудио уже загружено");
+                    } else {
+                        const loadAudio = confirm(`Для этой карты нужно аудио: "${mapData.audioFileName}". Загрузить сейчас?`);
+                        if (loadAudio) {
+                            document.getElementById('audio-upload').click();
+                        }
+                    }
+                    
+                    // Рендерим ноты в редакторе
+                    renderAllNotes();
+                } catch (error) {
+                    alert("Ошибка загрузки файла: неверный формат JSON!");
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        // Рендер всех нот
+        const renderAllNotes = () => {
+            clearRenderedNotes();
+            state.notes.forEach(note => {
+                if (!note.deleted) {
+                    renderNote(note);
+                }
             });
         };
 
         // Экспорт всех данных в ZIP
         const exportAllData = async () => {
-            const zip = new JSZip();
-            
-            // Добавляем все карты
-            const maps = await loadAllMapsFromDB();
-            maps.forEach((map, i) => {
-                zip.file(`map_${i}.json`, JSON.stringify(map, null, 2));
-            });
+            try {
+                const zip = new JSZip();
+                
+                // Добавляем все карты из IndexedDB
+                const maps = await new Promise((resolve) => {
+                    if (!db) return resolve([]);
+                    
+                    const transaction = db.transaction('maps', 'readonly');
+                    const store = transaction.objectStore('maps');
+                    const request = store.getAll();
+                    
+                    request.onsuccess = () => resolve(request.result || []);
+                    request.onerror = () => resolve([]);
+                });
 
-            // Добавляем аудио (если есть)
-            if (state.audioFile) {
-                const audioData = await loadAudioFromDB(state.audioFile.name);
-                if (audioData) {
-                    const base64Data = audioData.split(',')[1];
-                    zip.file(state.audioFile.name, base64Data, { base64: true });
+                maps.forEach((map, i) => {
+                    zip.file(`map_${i}.json`, JSON.stringify(map, null, 2));
+                });
+
+                // Добавляем текущее аудио (если есть)
+                if (state.audioFile) {
+                    const audioData = await loadAudioFromDB(state.audioFile.name);
+                    if (audioData) {
+                        const base64Data = audioData.split(',')[1];
+                        zip.file(state.audioFile.name, base64Data, { base64: true });
+                    }
                 }
-            }
 
-            // Генерируем ZIP
-            const content = await zip.generateAsync({ type: 'blob' });
-            const url = URL.createObjectURL(content);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Fightify_Backup_${new Date().toISOString().split('T')[0]}.zip`;
-            a.click();
-            URL.revokeObjectURL(url);
+                // Генерируем ZIP
+                const content = await zip.generateAsync({ type: 'blob' });
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Fightify_Backup_${new Date().toISOString().split('T')[0]}.zip`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error("Export error:", error);
+                alert("Ошибка при экспорте данных!");
+            }
         };
 
         // Импорт данных из ZIP
         const importAllData = async (file) => {
-            const zip = await JSZip.loadAsync(file);
-            
-            // Ищем аудио и карты
-            const audioFiles = Object.keys(zip.files).filter(name => 
-                ['.mp3', '.wav', '.ogg'].some(ext => name.endsWith(ext))
-            );
-            
-            const mapFiles = Object.keys(zip.files).filter(name => name.endsWith('.json'));
-            
-            // Загружаем аудио
-            if (audioFiles.length > 0) {
-                const audioFile = audioFiles[0];
-                const audioData = await zip.file(audioFile).async('base64');
-                const audioBlob = base64ToBlob(audioData, `audio/${audioFile.split('.').pop()}`);
-                await handleAudioUpload({ target: { files: [new File([audioBlob], audioFile)] } });
-            }
-            
-            // Загружаем первую карту
-            if (mapFiles.length > 0) {
-                const mapFile = mapFiles[0];
-                const mapData = await zip.file(mapFile).async('text');
-                await loadMap({ target: { result: mapData } });
+            try {
+                const zip = await JSZip.loadAsync(file);
+                
+                // Ищем аудио и карты
+                const audioFiles = Object.keys(zip.files).filter(name => 
+                    ['.mp3', '.wav', '.ogg'].some(ext => name.endsWith(ext))
+                );
+                
+                const mapFiles = Object.keys(zip.files).filter(name => name.endsWith('.json'));
+                
+                // Загружаем первое найденное аудио
+                if (audioFiles.length > 0) {
+                    const audioFile = audioFiles[0];
+                    const audioData = await zip.file(audioFile).async('base64');
+                    const audioBlob = base64ToBlob(audioData, `audio/${audioFile.split('.').pop()}`);
+                    await handleAudioUpload({ target: { files: [new File([audioBlob], audioFile)] } });
+                }
+                
+                // Загружаем первую найденную карту
+                if (mapFiles.length > 0) {
+                    const mapFile = mapFiles[0];
+                    const mapData = await zip.file(mapFile).async('text');
+                    loadMapFile(new File([mapData], mapFile));
+                }
+                
+                alert("Данные успешно импортированы!");
+            } catch (error) {
+                console.error("Import error:", error);
+                alert("Ошибка при импорте ZIP-архива!");
             }
         };
 
@@ -487,73 +647,113 @@
             // Обновление нот в редакторе
             setInterval(updateEditorNotes, 100);
         };
-        init();
 
-        function init() {
-            setupEventListeners();
-            updateKeyButtons();
-        }
-
-        function handleAudioUpload(e) {
+        // Обработка загрузки аудио
+        const handleAudioUpload = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
-            state.audio = new Audio(URL.createObjectURL(file));
-            state.audio.addEventListener('loadedmetadata', () => {
-                state.duration = state.audio.duration;
-                elements.audioInfo.textContent = file.name;
-            });
+            try {
+                // Сохраняем аудио в IndexedDB
+                await saveAudioToDB(file);
+                
+                state.audioFile = file;
+                state.audio = new Audio(URL.createObjectURL(file));
+                
+                state.audio.addEventListener('loadedmetadata', () => {
+                    state.duration = state.audio.duration;
+                    elements.audioInfo.textContent = file.name;
+                });
 
-            state.audio.addEventListener('timeupdate', updateAudioState);
-            state.audio.addEventListener('ended', () => {
-                state.isPlaying = false;
-                elements.playBtn.textContent = '▶️ Play';
-            });
-        }
+                state.audio.addEventListener('timeupdate', updateAudioState);
+                state.audio.addEventListener('ended', () => {
+                    state.isPlaying = false;
+                    elements.playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
+                });
+                
+                // Если есть ноты - переключаемся в редактор
+                if (state.notes.length > 0) {
+                    state.mode = 'editor';
+                    elements.modeToggle.textContent = 'Редактор';
+                    elements.modeToggle.classList.add('active');
+                    renderAllNotes();
+                }
+            } catch (error) {
+                console.error("Audio upload error:", error);
+                alert("Ошибка при загрузке аудио!");
+            }
+        };
 
-        function togglePlay() {
+        // Управление воспроизведением
+        const togglePlay = () => {
             if (!state.audio) return;
 
             if (state.isPlaying) {
                 state.audio.pause();
+                elements.playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
             } else {
                 state.audio.play();
+                elements.playBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
             }
             state.isPlaying = !state.isPlaying;
-            elements.playBtn.textContent = state.isPlaying ? '⏸️ Pause' : '▶️ Play';
-        }
+        };
 
-        function handleTimelineClick(e) {
+        // Перемотка по клику на таймлайн
+        const handleTimelineClick = (e) => {
             if (!state.audio) return;
             const rect = elements.timeline.getBoundingClientRect();
             const pos = (e.clientX - rect.left) / rect.width;
             state.audio.currentTime = pos * state.duration;
-        }
+            updateProgressBar();
+        };
 
-        function updateKeyButtons() {
+        // Обновление прогресс-бара
+        const updateProgressBar = () => {
+            if (!state.audio) return;
+            
+            state.currentTime = state.audio.currentTime;
+            const progress = (state.currentTime / state.duration) * 100;
+            elements.progressBar.style.width = `${progress}%`;
+            
+            const minutes = Math.floor(state.currentTime / 60);
+            const seconds = Math.floor(state.currentTime % 60).toString().padStart(2, '0');
+            elements.currentTime.textContent = `${minutes}:${seconds}`;
+            
+            if (state.mode === 'test') {
+                renderTestNotes();
+            }
+        };
+
+        // Обновление кнопок выбора клавиш
+        const updateKeyButtons = () => {
             elements.keyButtons.forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.key === state.selectedKey);
             });
-        }
+        };
 
-        function toggleMode() {
+        // Переключение режима редактор/тест
+        const toggleMode = () => {
             state.mode = state.mode === 'editor' ? 'test' : 'editor';
-            elements.modeToggle.textContent = state.mode === 'editor' ? 'Редактор' : 'Тест';
+            elements.modeToggle.textContent = state.mode === 'editor' ? '<i class="fas fa-edit"></i> Редактор' : '<i class="fas fa-gamepad"></i> Тест';
             elements.modeToggle.classList.toggle('active', state.mode === 'editor');
             clearRenderedNotes();
             
             if (state.mode === 'test' && state.audio) {
                 state.audio.currentTime = 0;
                 if (state.isPlaying) state.audio.play();
+            } else {
+                renderAllNotes();
             }
-        }
+        };
 
-        function updateDuration(e) {
+        // Обновление длительности отображения нот
+        const updateDuration = (e) => {
             state.noteDuration = parseFloat(e.target.value);
-            elements.durationValue.textContent = `${e.target.value}s`;
-        }
+            elements.durationValue.textContent = `${state.noteDuration}s`;
+        };
 
-        function handleNotePlacement(e) {
+        // Размещение нот в редакторе
+        const handleNotePlacement = (e) => {
             if (state.mode !== 'editor' || !state.audio) return;
 
             const rect = elements.gameArea.getBoundingClientRect();
@@ -571,9 +771,10 @@
 
             state.notes.push(note);
             renderNote(note);
-        }
+        };
 
-        function updateAudioState() {
+        // Обновление состояния аудио
+        const updateAudioState = () => {
             if (!state.audio) return;
             
             state.currentTime = state.audio.currentTime;
@@ -582,23 +783,15 @@
             if (state.mode === 'test') {
                 renderTestNotes();
             }
-        }
+        };
 
-        function updateProgressBar() {
-            const progress = (state.currentTime / state.duration) * 100;
-            elements.progressBar.style.width = `${progress}%`;
-            
-            const minutes = Math.floor(state.currentTime / 60);
-            const seconds = Math.floor(state.currentTime % 60).toString().padStart(2, '0');
-            elements.currentTime.textContent = `${minutes}:${seconds}`;
-        }
-
-        function renderNote(note) {
+        // Рендер одной ноты
+        const renderNote = (note) => {
             if (note.deleted) return;
             
             const noteElement = document.createElement('div');
-            noteElement.className = `note ${note.key} visible`;
-            noteElement.textContent = note.key === 'RMB' ? '⨀' : note.key;
+            noteElement.className = `note ${note.key}`;
+            noteElement.textContent = note.key === 'RMB' ? '<i class="fas fa-mouse-pointer"></i>' : note.key;
             noteElement.style.left = `${note.x}%`;
             noteElement.style.top = `${note.y}%`;
             noteElement.dataset.time = note.time;
@@ -611,9 +804,15 @@
             elements.gameArea.appendChild(noteElement);
             note.element = noteElement;
             state.renderedNotes.set(`${note.time}-${note.key}`, noteElement);
-        }
+            
+            // Плавное появление
+            setTimeout(() => {
+                noteElement.classList.add('visible');
+            }, 10);
+        };
 
-        function renderTestNotes() {
+        // Рендер нот в тестовом режиме
+        const renderTestNotes = () => {
             const currentTime = state.currentTime;
             const halfDuration = state.noteDuration / 2;
 
@@ -633,9 +832,10 @@
                     removeNoteElement(note);
                 }
             });
-        }
+        };
 
-        function updateEditorNotes() {
+        // Обновление нот в редакторе
+        const updateEditorNotes = () => {
             if (state.mode !== 'editor' || !state.audio) return;
             
             state.notes.forEach(note => {
@@ -652,18 +852,22 @@
                     }
                 }
             });
-        }
+        };
 
-        function handleNoteClick(e) {
-            const noteElement = e.target;
+        // Обработка клика по ноте
+        const handleNoteClick = (e) => {
+            const noteElement = e.target.closest('.note');
+            if (!noteElement) return;
+            
             const noteTime = parseFloat(noteElement.dataset.time);
             const noteKey = noteElement.dataset.key;
             
             markNoteAsDeleted(noteTime, noteKey);
             animateNoteRemoval(noteElement);
-        }
+        };
 
-        function handleKeyPress(e) {
+        // Обработка нажатия клавиш
+        const handleKeyPress = (e) => {
             if (state.mode !== 'test') return;
             
             const keyMap = {
@@ -684,9 +888,10 @@
             });
             
             notesToRemove.forEach(id => state.renderedNotes.delete(id));
-        }
+        };
 
-        function markNoteAsDeleted(time, key) {
+        // Пометить ноту как удаленную
+        const markNoteAsDeleted = (time, key) => {
             const noteIndex = state.notes.findIndex(n => 
                 Math.abs(n.time - time) < 0.01 && 
                 n.key === key && 
@@ -696,32 +901,32 @@
             if (noteIndex !== -1) {
                 state.notes[noteIndex].deleted = true;
             }
-        }
+        };
 
-        function animateNoteRemoval(element) {
+        // Анимация удаления ноты
+        const animateNoteRemoval = (element) => {
             element.classList.add('fade-out');
             setTimeout(() => {
                 element.remove();
             }, 300);
-        }
+        };
 
-        function removeNoteElement(note) {
+        // Удаление элемента ноты
+        const removeNoteElement = (note) => {
             if (note.element) {
                 note.element.remove();
                 state.renderedNotes.delete(`${note.time}-${note.key}`);
             }
-        }
+        };
 
-        function clearRenderedNotes() {
-            state.renderedNotes.forEach(element => element.remove());
+        // Очистка игровой области
+        const clearRenderedNotes = () => {
+            elements.gameArea.innerHTML = '';
             state.renderedNotes.clear();
-        }
+        };
 
-        function updateKeyButtons() {
-            elements.keyButtons.forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.key === state.selectedKey);
-            });
-        }
+        // Запуск редактора
+        init();
     </script>
 </body>
 </html>
