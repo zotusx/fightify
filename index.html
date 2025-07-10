@@ -15,19 +15,18 @@
   }
 
   body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Orbitron', sans-serif;
-  user-select: none;
-  height: 100vh;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: url('resources/bg_menu.png') no-repeat center center fixed;
-  background-size: cover;
-}
-
+    margin: 0;
+    padding: 0;
+    font-family: 'Orbitron', sans-serif;
+    user-select: none;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: url('resources/bg_menu.png') no-repeat center center fixed;
+    background-size: cover;
+  }
 
   #splash {
     position: fixed;
@@ -188,6 +187,23 @@
     cursor: default;
   }
 
+  #editor-btn {
+    background: var(--accent);
+    border: none;
+    color: var(--bg1);
+    font-size: 1.4rem;
+    padding: 14px 40px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 700;
+    box-shadow: 0 0 10px var(--accent);
+    transition: background-color 0.3s;
+    user-select: none;
+  }
+  #editor-btn:hover:not(:disabled) {
+    background: #9e103a;
+  }
+
   #right-panel {
     flex: 1;
     padding: 24px;
@@ -246,7 +262,7 @@
   #audio-visualizer {
     flex-grow: 1;
     height: 20px;
-    background: #2b2129;
+    background: #鮃;
     border-radius: 10px;
     overflow: hidden;
   }
@@ -279,7 +295,6 @@
     font-weight: 700;
   }
 
-  /* Футер */
   #footer {
     position: fixed;
     bottom: 12px;
@@ -334,21 +349,20 @@
 
     <div class="center">
       <button id="play-pause-btn" disabled>Play ▶️</button>
+      <button id="editor-btn">Editor</button>
     </div>
 
     <div class="column" id="right-panel">
       <div id="map-card">
-        <div id="map-title">Test Map</div>
-        <div id="map-author">Author: Zotus</div>
-        <div id="map-bpm">BPM: 128</div>
+        <div id="map-title">No Map Selected</div>
+        <div id="map-author">Author: Unknown</div>
+        <div id="map-bpm">BPM: Unknown</div>
         <div id="map-preview">
           Audio Preview
           <button id="audio-toggle" title="Play/Pause Audio">▶️</button>
           <canvas id="audio-visualizer"></canvas>
         </div>
-        <div id="map-list">
-          <div class="map-item selected" data-id="test1">Test Map (128 BPM)</div>
-        </div>
+        <div id="map-list"></div>
       </div>
     </div>
   </div>
@@ -358,6 +372,7 @@
   const splash = document.getElementById('splash');
   const menu = document.getElementById('menu');
   const playPauseBtn = document.getElementById('play-pause-btn');
+  const editorBtn = document.getElementById('editor-btn');
   const audioToggleBtn = document.getElementById('audio-toggle');
   const mapList = document.getElementById('map-list');
   const mapTitle = document.getElementById('map-title');
@@ -366,11 +381,12 @@
   const audioVisualizer = document.getElementById('audio-visualizer');
 
   let isPlaying = false;
+  let currentAudio = null;
+  let selectedMap = null;
 
-  // Audio setup (simple test tone)
+  // Audio setup
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   const audioCtx = new AudioContext();
-  let oscillator;
   let analyser = audioCtx.createAnalyser();
   analyser.fftSize = 64;
   const bufferLength = analyser.frequencyBinCount;
@@ -391,36 +407,68 @@
     }
   }
 
-  // Start splash then show menu
-  setTimeout(() => {
-    splash.style.opacity = 0;
-    splash.style.pointerEvents = 'none';
-    menu.style.opacity = 1;
-    menu.style.pointerEvents = 'auto';
+  async function loadMaps() {
+    try {
+      const response = await fetch('get_maps.php');
+      const data = await response.json();
+      if (data.success) {
+        mapList.innerHTML = '';
+        data.maps.forEach(map => {
+          const mapItem = document.createElement('div');
+          mapItem.className = 'map-item';
+          mapItem.dataset.id = map.id;
+          mapItem.textContent = `${map.audio} (${Math.floor(map.duration / 60)}:${(map.duration % 60).toFixed(0).padStart(2, '0')})`;
+          mapItem.addEventListener('click', () => selectMap(map));
+          mapList.appendChild(mapItem);
+        });
+      } else {
+        mapList.innerHTML = '<div class="map-item">No maps available</div>';
+      }
+    } catch (error) {
+      mapList.innerHTML = '<div class="map-item">Error loading maps</div>';
+    }
+  }
 
+  async function selectMap(map) {
+    // Удаляем выделение с других элементов
+    document.querySelectorAll('.map-item').forEach(item => item.classList.remove('selected'));
+    document.querySelector(`.map-item[data-id="${map.id}"]`).classList.add('selected');
+
+    // Обновляем информацию о карте
+    selectedMap = map;
+    mapTitle.textContent = map.audio;
+    mapAuthor.textContent = 'Author: Zotus'; // Можно добавить поле author в mapData
+    mapBPM.textContent = 'BPM: Unknown'; // Можно добавить поле bpm в mapData
     playPauseBtn.disabled = false;
-  }, 2200);
+
+    // Останавливаем текущее аудио, если оно есть
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+    }
+
+    // Загружаем аудио для превью
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+    currentAudio = new Audio(`audio/${map.audio}`);
+    const source = audioCtx.createMediaElementSource(currentAudio);
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    isPlaying = false;
+    audioToggleBtn.textContent = '▶️';
+  }
 
   function playAudio() {
-    if (!oscillator) {
-      oscillator = audioCtx.createOscillator();
-      oscillator.type = 'sawtooth';
-      oscillator.frequency.setValueAtTime(220, audioCtx.currentTime);
-      oscillator.connect(analyser);
-      analyser.connect(audioCtx.destination);
-      oscillator.start();
-      drawVisualizer();
-    }
+    if (!currentAudio) return;
+    currentAudio.play();
     isPlaying = true;
     playPauseBtn.textContent = 'Pause ⏸️';
     audioToggleBtn.textContent = '⏸️';
+    drawVisualizer();
   }
 
   function pauseAudio() {
-    if (oscillator) {
-      oscillator.stop();
-      oscillator.disconnect();
-      oscillator = null;
+    if (currentAudio) {
+      currentAudio.pause();
     }
     isPlaying = false;
     playPauseBtn.textContent = 'Play ▶️';
@@ -428,25 +476,33 @@
     canvasCtx.clearRect(0, 0, audioVisualizer.width, audioVisualizer.height);
   }
 
+  // Start splash then show menu
+  setTimeout(() => {
+    splash.style.opacity = 0;
+    splash.style.pointerEvents = 'none';
+    menu.style.opacity = 1;
+    menu.style.pointerEvents = 'auto';
+    loadMaps();
+  }, 2200);
+
   playPauseBtn.addEventListener('click', () => {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-
-    if (isPlaying) pauseAudio();
-    else playAudio();
-
-    // При старте убираем скролл с выбора карт
-    if (!isPlaying) {
-      mapList.scrollTop = 0;
+    if (!selectedMap) return;
+    if (isPlaying) {
+      pauseAudio();
+    } else {
+      window.location.href = `game.html?map=${selectedMap.id}`;
     }
+  });
+
+  editorBtn.addEventListener('click', () => {
+    window.location.href = 'editor.html';
   });
 
   audioToggleBtn.addEventListener('click', () => {
     if (audioCtx.state === 'suspended') audioCtx.resume();
-
     if (isPlaying) pauseAudio();
     else playAudio();
-    mapList.scrollTop = 0;
-    });
+  });
 </script>
 
 <div id="footer">
